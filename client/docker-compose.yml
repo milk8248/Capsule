@@ -1,0 +1,65 @@
+version: "3.7"
+services:
+    nginx:
+        depends_on:
+          - api
+          - client
+        restart: always
+        build:
+          dockerfile: Dockerfile
+          context: ./nginx
+        ports:
+          - "3050:80"
+
+    api:
+        build:
+          dockerfile: Dockerfile
+          context: "./server"
+        depends_on:
+          - db
+        volumes:
+          - /app/node_modules
+          - ./server:/app
+        environment:
+            PGHOST=db
+            PGPORT=5432
+            PGUSER=postgres
+            PGDATABASE=postgres
+            PGPASSWORD=Itri035917093
+
+      client:
+        build:
+          dockerfile: Dockerfile
+          context: ./client
+        volumes:
+          - /app/node_modules
+          - ./client:/app
+
+    db:
+        image: postgres:latest
+        restart: always
+        environment:
+            POSTGRES_DB: postgres
+            POSTGRES_USER: postgres
+            POSTGRES_PASSWORD: Itri035917093
+            PGDATA: /var/lib/postgresql/data
+        volumes:
+            - db-data:/var/lib/postgresql/data
+        ports:
+            - "5432:5432"
+    pgadmin:
+        image: dpage/pgadmin4:latest
+        restart: always
+        environment:
+            PGADMIN_DEFAULT_EMAIL: LambertChen@itri.org.tw
+            PGADMIN_DEFAULT_PASSWORD: Itri035917093
+            PGADMIN_LISTEN_PORT: 80
+        ports:
+            - "8080:80"
+        volumes:
+            - pgadmin-data:/var/lib/pgadmin
+        links:
+            - "db:pgsql-server"
+volumes:
+    db-data:
+    pgadmin-data:

@@ -1,0 +1,21 @@
+{
+  "name": "capsule",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node app"
+  },
+  "dependencies": {
+    "@milk8248/capsule-client-dist": "file:capsule-client-dist-0.1.0.tgz",
+    "cookie-parser": "~1.4.4",
+    "debug": "~2.6.9",
+    "dotenv": "^16.0.3",
+    "express": "~4.16.1",
+    "fast-csv": "^4.3.6",
+    "moment": "^2.29.4",
+    "morgan": "~1.9.1",
+    "multer": "^1.4.5-lts.1",
+    "pg": "^8.8.0",
+    "wait-on": "^7.0.1"
+  }
+}

@@ -1,0 +1,7 @@
+node_modules
+npm-debug.log
+secret
+.idea
+build
+*.tgz
+server/server
