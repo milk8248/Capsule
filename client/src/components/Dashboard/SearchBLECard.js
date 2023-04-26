@@ -1,4 +1,5 @@
 import React from "react";
+import {InputText} from "primereact/inputtext";
 
 class SearchBLECard extends React.Component {
     constructor(props) {
@@ -30,7 +31,7 @@ class SearchBLECard extends React.Component {
                     <div className="body">
                         <form onSubmit={this.submitForm}>
                             <div className="input-group mb-3">
-                                <input
+                                <InputText
                                     aria-describedby="basic-addon2"
                                     aria-label="BLE MAC Address"
                                     className="form-control"

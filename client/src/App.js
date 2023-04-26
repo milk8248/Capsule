@@ -3,7 +3,6 @@ import { connect } from "react-redux";
 import { Route, Switch, withRouter } from "react-router-dom";
 import Login from "./screens/Login";
 import dashboard from "./screens/Dashboard/Dashboard";
-import demographic from "./screens/Dashboard/Demographic";
 import ioT from "./screens/Dashboard/IoT";
 import NavbarMenu from "./components/NavbarMenu";
 import filemanagerdashboard from "./screens/FileManager/Dashboard";
@@ -54,7 +53,6 @@ import formvalidation from "./screens/Forms/FormValidation";
 import basicelements from "./screens/Forms/BasicElements";
 import tablenormal from "./screens/Tables/TableNormal";
 import exam from "./screens/Charts/Exam";
-import leafletmap from "./screens/Maps/GoogleMaps";
 import capsulelist from "./screens/Ble/CapsuleList";
 import capsule from "./screens/Ble/Capsule";
 import uploadcapsuleble from "./screens/Ble/UploadCapsuleBle";
@@ -142,11 +140,6 @@ class App extends React.Component {
                   exact
                   path={`${process.env.PUBLIC_URL}/uploadcapsulereceivercsv`}
                   component={uploadcapsulereceivercsv}
-                />
-                <Route
-                  exact
-                  path={`${process.env.PUBLIC_URL}/demographic`}
-                  component={demographic}
                 />
                 <Route
                   exact
@@ -352,11 +345,6 @@ class App extends React.Component {
                   exact
                   path={`${process.env.PUBLIC_URL}/exam`}
                   component={exam}
-                />
-                <Route
-                  exact
-                  path={`${process.env.PUBLIC_URL}/leafletmap`}
-                  component={leafletmap}
                 />
               </Switch>
             </div>

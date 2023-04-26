@@ -58,28 +58,6 @@ class CapsuleList extends React.Component {
       .then(response => response.json())
       .then(response => {
         response.response.forEach(element => {
-          element.mac = <Link to={'/capsule/' + element.mac}>{element.mac}</Link>
-          if (element.pressure_state == 0) {
-            element.pressure_state = <span className="badge">未量測</span>
-          } else if (element.pressure_state == 1) {
-            element.pressure_state = <span className="badge badge-danger">量測中</span>
-          } else {
-            element.pressure_state = <span className="badge badge-success">已量測</span>
-          }
-          if (element.thermometer_state == 0) {
-            element.thermometer_state = <span className="badge">未量測</span>
-          } else if (element.thermometer_state == 1) {
-            element.thermometer_state = <span className="badge badge-danger">量測中</span>
-          } else {
-            element.thermometer_state = <span className="badge badge-success">已量測</span>
-          }
-          if (element.airtightness_state == 0) {
-            element.airtightness_state = <span className="badge">未量測</span>
-          } else if (element.airtightness_state == 1) {
-            element.airtightness_state = <span className="badge badge-danger">量測中</span>
-          } else {
-            element.airtightness_state = <span className="badge badge-success">已量測</span>
-          }
 
           element.delete = <button
             type="button"
