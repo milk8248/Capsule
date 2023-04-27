@@ -5,3 +5,4 @@ secret
 build
 *.tgz
 server/server
+.env

@@ -8,9 +8,6 @@ const http = require("http");
 const indexRouter = require('./routes/index');
 const apiRouter = require('./routes/api');
 
-const absolutePath = require('@milk8248/capsule-client-dist');
-
-
 var app = express();
 
 var port = normalizePort(process.env.PORT || '3030');
