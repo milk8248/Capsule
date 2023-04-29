@@ -8,6 +8,8 @@ const http = require("http");
 const indexRouter = require('./routes/index');
 const apiRouter = require('./routes/api');
 
+const absolutePath = require('@milk8248/capsule-client-dist');
+
 var app = express();
 
 var port = normalizePort(process.env.PORT || '3030');
@@ -18,16 +20,12 @@ server.listen(port);
 server.on('error', onError);
 server.on('listening', onListening);
 
-
-
-
-
 app.use(logger('dev'));
 app.use(express.json());
+app.use(express.static(absolutePath.default()));
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
-app.use('/', indexRouter);
 app.use('/api', apiRouter);
 
 process.on('uncaughtException', error => {

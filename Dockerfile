@@ -1,4 +1,4 @@
-FROM node:12.16-slim as builder
+FROM node:18.16.0-alpine as builder
 COPY server/ /tmp/app/
 RUN cd /tmp/app/ && npm install --unsafe-perm && npm run pkg
 

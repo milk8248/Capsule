@@ -2,10 +2,21 @@
   "name": "capsule",
   "version": "0.0.0",
   "private": true,
+  "main": "app.js",
+  "bin": {
+    "server": "app.js"
+  },
   "scripts": {
-    "start": "node app"
+    "start": "node app",
+    "pkg": "pkg . --targets linux --output server"
+  },
+  "pkg": {
+    "assets": [
+      "node_modules/@milk8248/capsule-client-dist/**/*"
+    ]
   },
   "dependencies": {
+    "@milk8248/capsule-client-dist": "file:milk8248-capsule-client-dist-0.1.0.tgz",
     "cookie-parser": "~1.4.4",
     "debug": "~2.6.9",
     "dotenv": "^16.0.3",
@@ -15,6 +26,7 @@
     "morgan": "~1.9.1",
     "multer": "^1.4.5-lts.1",
     "pg": "^8.8.0",
+    "pkg": "^5.8.1",
     "wait-on": "^7.0.1"
   }
 }

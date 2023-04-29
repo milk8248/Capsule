@@ -1,43 +1,22 @@
 version: "3.7"
 services:
-  nginx:
-    depends_on:
-      - api
-      - client
+  web:
     restart: always
     build:
-      dockerfile: Dockerfile
-      context: ./nginx
+      context: .
     ports:
-      - "80:80"
-
-  api:
-    build:
-      dockerfile: Dockerfile
-      context: "./server"
+      - "80:3030"
     depends_on:
       - db
-    volumes:
-      - /app/node_modules
-      - ./server:/app
+    stdin_open: true
+    image: milk8248/capsule-web:0.1.0
     environment:
+      # postgres
       PGHOST: db
       PGPORT: 5432
       PGUSER: postgres
       PGDATABASE: postgres
       PGPASSWORD: Itri035917093
-
-  client:
-    stdin_open: true
-    environment:
-      - CHOKIDAR_USEPOLLING=true
-      - DANGEROUSLY_DISABLE_HOST_CHECK=true
-    build:
-      dockerfile: Dockerfile
-      context: ./client
-    volumes:
-      - /app/node_modules
-      - ./client:/app
 
   db:
     image: postgres:latest
