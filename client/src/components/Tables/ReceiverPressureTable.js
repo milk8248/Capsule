@@ -3,7 +3,7 @@ import {connect} from "react-redux";
 import {Table} from 'antd';
 import moment from "moment";
 
-class PressureTable extends React.Component {
+class ReceiverPressureTable extends React.Component {
 
     render() {
 
@@ -17,8 +17,8 @@ class PressureTable extends React.Component {
             },
             {
                 title: '壓力',
-                dataIndex: 'value',
-                key: 'pressure',
+                dataIndex: 'reader_pressure',
+                key: 'reader_pressure',
             },
         ];
 
@@ -27,9 +27,9 @@ class PressureTable extends React.Component {
                 <div className="card">
                     <div className="header">
                         <h2>
-                            壓力儀資料{" "}
+                            接收器壓力CSV資料{" "}
                             <small>
-                                來自壓力計量測的資料
+                                來自CSV的資料
                             </small>
                         </h2>
                     </div>
@@ -44,4 +44,4 @@ class PressureTable extends React.Component {
 
 const mapStateToProps = ({}) => ({});
 
-export default connect(mapStateToProps, {})(PressureTable);
+export default connect(mapStateToProps, {})(ReceiverPressureTable);

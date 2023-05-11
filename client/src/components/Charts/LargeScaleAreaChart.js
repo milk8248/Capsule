@@ -9,19 +9,22 @@ class LargeScaleAreaChart extends React.Component {
 
     render() {
         const {
+            thermoData=[],
+            bleData=[] } = this.props;
 
-            thermoData,
-            bleData } = this.props;
+        let dateTime = [];
 
-        let dateTime = []
+        if(thermoData.length>0) {
+            thermoData.map(entry => {
+                dateTime.push(entry.timestamp)
+            })
+        }
 
-        thermoData.map(entry => {
-            dateTime.push(entry.timestamp)
-        })
-
-        bleData.map(entry => {
-            dateTime.push(entry.timestamp)
-        })
+        if(bleData.length>0) {
+            bleData.map(entry => {
+                dateTime.push(entry.timestamp)
+            })
+        }
 
         const chartDate = dateTime.sort()
 
@@ -36,15 +39,19 @@ class LargeScaleAreaChart extends React.Component {
         let chartT4Data = []
         let chartBData = []
         if (chartDate.length > 0) {
-            thermoData.map(entry => {
-                chartT1Data.push([chartDate.indexOf(entry.timestamp), entry.value1])
-                chartT2Data.push([chartDate.indexOf(entry.timestamp), entry.value2])
-                chartT3Data.push([chartDate.indexOf(entry.timestamp), entry.value3])
-                chartT4Data.push([chartDate.indexOf(entry.timestamp), entry.value4])
-            })
-            bleData.map(entry => {
-                chartBData.push([chartDate.indexOf(entry.timestamp), entry.temperature])
-            })
+            if(thermoData.length>0) {
+                thermoData.map(entry => {
+                    chartT1Data.push([chartDate.indexOf(entry.timestamp), entry.value1])
+                    chartT2Data.push([chartDate.indexOf(entry.timestamp), entry.value2])
+                    chartT3Data.push([chartDate.indexOf(entry.timestamp), entry.value3])
+                    chartT4Data.push([chartDate.indexOf(entry.timestamp), entry.value4])
+                })
+            }
+            if(bleData.length>0) {
+                bleData.map(entry => {
+                    chartBData.push([chartDate.indexOf(entry.timestamp), entry.temperature])
+                })
+            }
         }
 
         const option = {

@@ -50,7 +50,7 @@
     "eject": "react-scripts eject",
     "dist": "npm run build && cpr build dist-package/build -d",
     "pack-dist": "npm run dist && npm pack ./dist-package",
-    "pack": "npm pack dist-package"
+    "pack": "npm pack ./dist-package"
   },
   "proxy": "http://127.0.0.1:3030",
   "eslintConfig": {

@@ -1,13 +1,13 @@
-import React, {useState} from "react";
-import {connect} from "react-redux";
-import {Table} from 'antd';
+import React, { useState } from "react";
+import { connect } from "react-redux";
+import { Table } from 'antd';
 import moment from "moment";
 
-class PressureTable extends React.Component {
+class BlePcbaTable extends React.Component {
 
     render() {
 
-        const {pressureData, width = "col-md-3"} = this.props;
+        const { bleData, width = "col-lg-5" } = this.props;
 
         const columns = [
             {
@@ -16,10 +16,10 @@ class PressureTable extends React.Component {
                 key: 'timestamp',
             },
             {
-                title: '壓力',
-                dataIndex: 'value',
-                key: 'pressure',
-            },
+                title: '溫度',
+                dataIndex: 'temperature',
+                key: 'temperature',
+            }
         ];
 
         return (
@@ -27,14 +27,14 @@ class PressureTable extends React.Component {
                 <div className="card">
                     <div className="header">
                         <h2>
-                            壓力儀資料{" "}
+                            PCBA藍芽資料{" "}
                             <small>
-                                來自壓力計量測的資料
+                                來自PCBA藍芽端的膠囊資料
                             </small>
                         </h2>
                     </div>
                     <div className="body table-responsive">
-                        <Table dataSource={pressureData} columns={columns}/>
+                        <Table dataSource={bleData} columns={columns} />
                     </div>
                 </div>
             </div>
@@ -42,6 +42,6 @@ class PressureTable extends React.Component {
     }
 }
 
-const mapStateToProps = ({}) => ({});
+const mapStateToProps = ({ mailInboxReducer }) => ({});
 
-export default connect(mapStateToProps, {})(PressureTable);
+export default connect(mapStateToProps, {})(BlePcbaTable);

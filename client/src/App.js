@@ -54,6 +54,8 @@ import basicelements from "./screens/Forms/BasicElements";
 import tablenormal from "./screens/Tables/TableNormal";
 import exam from "./screens/Charts/Exam";
 import capsulelist from "./screens/Ble/CapsuleList";
+import receiverlist from "./screens/Ble/ReceiverList";
+import receiver from "./screens/Ble/Receiver";
 import capsule from "./screens/Ble/Capsule";
 import uploadcapsuleble from "./screens/Ble/UploadCapsuleBle";
 import uploadcapsulereceivercsv from "./screens/Ble/UploadCapsuleReceiverCsv";
@@ -130,6 +132,16 @@ class App extends React.Component {
                   exact
                   path={`${process.env.PUBLIC_URL}/capsule`}
                   component={capsulelist}
+                />
+                <Route
+                    exact
+                    path={`${process.env.PUBLIC_URL}/receiver`}
+                    component={receiverlist}
+                />
+                <Route
+                    exact
+                    path={`${process.env.PUBLIC_URL}/receiver/:bleMac`}
+                    component={receiver}
                 />
                 <Route
                   exact

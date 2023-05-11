@@ -12,9 +12,9 @@ import 'primeicons/primeicons.css';
 import 'primeflex/primeflex.css';
 
 
-export default function BleListTable(props) {
+export default function ReceiverListTable(props) {
 
-    const {bleData} = props;
+    const {receiverData} = props;
     const [filters, setFilters] = useState(null);
     const [globalFilterValue, setGlobalFilterValue] = useState("");
     const [statuses] = useState([
@@ -72,14 +72,10 @@ export default function BleListTable(props) {
     const macBodyTemplate = (rowData) => {
         const mac = rowData.mac;
         return (
-            <Link to={'/capsule/' + mac}>{mac}</Link>
+            <Link to={'/receiver/' + mac}>{mac}</Link>
         );
     };
 
-    const thermometerPcbaStateBodyTemplate = (rowData) => {
-        return (<span
-            className={'badge badge-' + getSeverity(rowData.thermometer_pcba_state)}>{getState(rowData.thermometer_pcba_state)}</span>);
-    };
     const pressureStateBodyTemplate = (rowData) => {
         return (
             <span
@@ -128,11 +124,11 @@ export default function BleListTable(props) {
             <div className="card">
                 <div className="header">
                     <h2>
-                        藍芽膠囊清單
+                        接收器清單
                     </h2>
                 </div>
                 <div className="body table-responsive">
-                    <DataTable header={header} value={bleData} paginator
+                    <DataTable header={header} value={receiverData} paginator
                                showGridlines
                                rows={10}
                                dataKey="mac"
@@ -143,16 +139,9 @@ export default function BleListTable(props) {
                                header={header}
                                emptyMessage="No data found.">
                         <Column field="mac" header="Mac" sortable body={macBodyTemplate}></Column>
-                        <Column field="thermometer_pcba_state" header="PCBA溫度"
-                                body={thermometerPcbaStateBodyTemplate}></Column>
-                        <Column field="airtightness_state" header="氣密"
-                                body={airtightnessStateBodyTemplate}></Column>
-                        <Column field="thermometer_state" header="溫度"
-                                body={thermometerStateBodyTemplate}></Column>
                         <Column field="pressure_state" header="氣壓"
                                 body={pressureStateBodyTemplate}></Column>
                     </DataTable>
-                    {/*<Table dataSource={bleData} columns={columns} />*/}
                 </div>
             </div>
         </div>

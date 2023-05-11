@@ -49,25 +49,6 @@ class PageHeader extends React.Component {
               </a>{" "}
               {HeaderText}
             </h2>
-            <ul className="breadcrumb">
-              <li className="breadcrumb-item">
-                <a href="/">
-                  <i className="icon-home"></i>
-                </a>
-              </li>
-              {Breadcrumb.map((item, index) => {
-                return (
-                  <li
-                    key={item.name + index}
-                    className="breadcrumb-item active"
-                  >
-                    <a href={item.navigate ? item.navigate : null}>
-                      {item.name}
-                    </a>
-                  </li>
-                );
-              })}
-            </ul>
           </div>
         </div>
       </div>

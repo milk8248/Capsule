@@ -7,7 +7,7 @@ class ThermometerTable extends React.Component {
 
     render() {
 
-        const { thermoData } = this.props;
+        const { thermoData, width="col-md-4" } = this.props;
 
         const columns = [
             {
@@ -38,7 +38,7 @@ class ThermometerTable extends React.Component {
         ];
 
         return (
-            <div className="col-md-4">
+            <div className={width}>
                 <div className="card">
                     <div className="header">
                         <h2>
