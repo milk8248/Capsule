@@ -80,6 +80,14 @@ export default function BleListTable(props) {
         return (<span
             className={'badge badge-' + getSeverity(rowData.thermometer_pcba_state)}>{getState(rowData.thermometer_pcba_state)}</span>);
     };
+    const pressurePcbaStateBodyTemplate = (rowData) => {
+        return (<span
+            className={'badge badge-' + getSeverity(rowData.pressure_pcba_state)}>{getState(rowData.pressure_pcba_state)}</span>);
+    };
+    const rfPcbaStateBodyTemplate = (rowData) => {
+        return (<span
+            className={'badge badge-' + getSeverity(rowData.rf_pcba_state)}>{getState(rowData.rf_pcba_state)}</span>);
+    };
     const pressureStateBodyTemplate = (rowData) => {
         return (
             <span
@@ -93,6 +101,11 @@ export default function BleListTable(props) {
     const airtightnessStateBodyTemplate = (rowData) => {
         return (<span
             className={'badge badge-' + getSeverity(rowData.airtightness_state)}>{getState(rowData.airtightness_state)}</span>);
+    };
+
+    const rfStateBodyTemplate = (rowData) => {
+        return (<span
+            className={'badge badge-' + getSeverity(rowData.rf_state)}>{getState(rowData.rf_state)}</span>);
     };
 
     const getState = (status) => {
@@ -145,12 +158,18 @@ export default function BleListTable(props) {
                         <Column field="mac" header="Mac" sortable body={macBodyTemplate}></Column>
                         <Column field="thermometer_pcba_state" header="PCBA溫度"
                                 body={thermometerPcbaStateBodyTemplate}></Column>
+                        <Column field="pressure_pcba_state" header="PCBA氣壓"
+                                body={pressurePcbaStateBodyTemplate}></Column>
+                        <Column field="rf_pcba_state" header="PCBA RF"
+                                body={rfPcbaStateBodyTemplate}></Column>
                         <Column field="airtightness_state" header="氣密"
                                 body={airtightnessStateBodyTemplate}></Column>
                         <Column field="thermometer_state" header="溫度"
                                 body={thermometerStateBodyTemplate}></Column>
                         <Column field="pressure_state" header="氣壓"
                                 body={pressureStateBodyTemplate}></Column>
+                        <Column field="rf_state" header="RF"
+                                body={rfStateBodyTemplate}></Column>
                     </DataTable>
                     {/*<Table dataSource={bleData} columns={columns} />*/}
                 </div>

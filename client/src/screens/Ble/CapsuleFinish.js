@@ -16,6 +16,7 @@ import {
     changeBleMac
 } from "../../actions";
 import moment from "moment";
+import RfTable from "../../components/Tables/RfTable";
 
 class Capsule extends React.Component {
 
@@ -26,27 +27,34 @@ class Capsule extends React.Component {
             bleMac: bleMac,
             thermoData: [],
             pressureData: [],
+            rfData:[],
             airtightnessData: 'Null',
             isBleDataFetch: false,
             airtightnessState: 0,
             thermometerState: 0,
             pressureState: 0,
+            rfState: 0,
             airtightnessStartTime: '',
             airtightnessEndTime: '',
             thermometerStartTime: '',
             thermometerEndTime: '',
             pressureStartTime: '',
             pressureEndTime: '',
+            rfStartTime: '',
+            rfEndTime: '',
             bleData: [],
             bleReceiverData: []
         };
 
-        this.getCapsuleInfo(bleMac);
-        this.getBleData(bleMac);
-        this.getBleReceiverData(bleMac);
-        this.getThermometerData(bleMac);
-        this.getPressureData(bleMac);
-        this.getAirtightnessData(bleMac);
+        setInterval( () => {
+            this.getCapsuleInfo(bleMac);
+            this.getBleData(bleMac);
+            this.getBleReceiverData(bleMac);
+            this.getThermometerData(bleMac);
+            this.getPressureData(bleMac);
+            this.getAirtightnessData(bleMac);
+            this.getRfData(bleMac);
+        }, 1000);
         
     }
 
@@ -82,6 +90,16 @@ class Capsule extends React.Component {
         }
     }
 
+    onPressRf(bleMac, state) {
+        if (state == 0) {
+            if (window.confirm('確定要重新開始測試嗎?')) {
+                this.putRfState(bleMac, state);
+            }
+        } else {
+            this.putRfState(bleMac, state);
+        }
+    }
+
     handleMacChange(text) {
         this.setState({
             bleMac: text
@@ -95,7 +113,7 @@ class Capsule extends React.Component {
     }
 
     getPressureData = (bleMac) => {
-        fetch('/api/receiver/pressure/' + bleMac, {
+        fetch('/api/capsule/pressure/' + bleMac, {
             method: 'GET',
             headers: {"Content-Type": "application/json"},
         })
@@ -141,6 +159,26 @@ class Capsule extends React.Component {
                 if (response.response.length > 0) {
                     this.setState({
                         airtightnessData: response.response[response.response.length - 1].value,
+                    })
+                }
+
+            })
+            .catch(err => console.error(err));
+    };
+
+    getRfData = (bleMac) => {
+        fetch('/api/capsule/rf/' + bleMac, {
+            method: 'GET',
+            headers: {"Content-Type": "application/json"},
+        })
+            .then(response => response.json())
+            .then(response => {
+                response.response.map(entry => {
+                    entry.timestamp = moment(entry.timestamp).format('YYYY-MM-DD HH:mm:ss')
+                })
+                if (response.response.length > 0) {
+                    this.setState({
+                        rfData: response.response,
                     })
                 }
 
@@ -263,13 +301,34 @@ class Capsule extends React.Component {
             .catch(err => console.error(err));
     };
 
+    putRfState = (bleMac, state) => {
+        var urlencoded = new URLSearchParams();
+        // console.log(bleMac)
+        urlencoded.append("mac", bleMac);
+        urlencoded.append("state", state);
+
+        fetch('/api/capsule/rf', {
+            method: 'PUT',
+            body: urlencoded
+        })
+            .then(response => response.json())
+            .then(response => {
+                if (response.code == 200) {
+                    this.setState({
+                        rfState: state,
+                    })
+                }
+            })
+            .catch(err => console.error(err));
+    };
+
 
     render() {
 
         const {
             bleMac,
             isThermoDataFetch,
-            thermoData, pressureData,
+            thermoData, pressureData, rfData,
             isBleDataFetch,
             airtightnessData,
             bleData, bleReceiverData
@@ -284,6 +343,7 @@ class Capsule extends React.Component {
                         EndTime={this.state.airtightnessEndTime}
                         Value={airtightnessData}
                         ShowValue={true}
+                        width="col-lg-3 col-md-3 col-md-12"
                         OnClick={() => {
                             if (this.state.airtightnessState == 0) {
                                 this.onPressAir(this.state.bleMac, 1);
@@ -300,6 +360,7 @@ class Capsule extends React.Component {
                         Heading="溫度測試"
                         StartTime={this.state.thermometerStartTime}
                         EndTime={this.state.thermometerEndTime}
+                        width="col-lg-3 col-md-3 col-md-12"
                         OnClick={() => {
                             if (this.state.thermometerState == 0) {
                                 this.onPressThermometer(this.state.bleMac, 1);
@@ -316,6 +377,7 @@ class Capsule extends React.Component {
                         Heading="氣壓測試"
                         StartTime={this.state.pressureStartTime}
                         EndTime={this.state.pressureEndTime}
+                        width="col-lg-3 col-md-3 col-md-12"
                         OnClick={() => {
                             if (this.state.pressureState == 0) {
                                 this.onPressPressure(this.state.bleMac, 1);
@@ -326,6 +388,25 @@ class Capsule extends React.Component {
                             }
                         }}
                         Toggle={this.state.pressureState}
+                    />
+                }
+
+                {bleMac !== '' &&
+                    <SecurityMainCard
+                        Heading="RF測試"
+                        StartTime={this.state.rfStartTime}
+                        EndTime={this.state.rfEndTime}
+                        width="col-lg-3 col-md-3 col-md-12"
+                        OnClick={() => {
+                            if (this.state.rfState == 0) {
+                                this.onPressRf(this.state.bleMac, 1);
+                            } else if (this.state.rfState == 1) {
+                                this.onPressRf(this.state.bleMac, 2);
+                            } else {
+                                this.onPressRf(this.state.bleMac, 0);
+                            }
+                        }}
+                        Toggle={this.state.rfState}
                     />
                 }
 
@@ -343,6 +424,11 @@ class Capsule extends React.Component {
                 {bleMac !== '' &&
                     <PressureTable
                         pressureData={pressureData}/>
+                }
+                {bleMac !== '' &&
+                    <RfTable
+                        width="col-md-5"
+                        rfData={rfData}/>
                 }
                 {bleMac !== '' &&
                     <BleTable

@@ -17,6 +17,7 @@ import {
 } from "../../actions";
 import moment from "moment";
 import BlePcbaTable from "../../components/Tables/BlePcbaTable";
+import RfTable from "../../components/Tables/RfTable";
 
 class CapsulePcba extends React.Component {
 
@@ -30,14 +31,26 @@ class CapsulePcba extends React.Component {
             thermometerPcbaState: 0,
             thermometerPcbaStartTime: '',
             thermometerPcbaEndTime: '',
+            pressurePcbaData: [],
+            pressurePcbaState: 0,
+            pressurePcbaStartTime: '',
+            pressurePcbaEndTime: '',
+            rfPcbaData: [],
+            rfPcbaState: 0,
+            rfPcbaStartTime: '',
+            rfPcbaEndTime: '',
             bleData: [],
             bleReceiverData: []
         };
 
-        this.getCapsuleInfo(bleMac);
-        // this.getBleData(bleMac);
-        // this.getBleReceiverData(bleMac);
-        this.getThermometerPcbaData(bleMac);
+
+
+        setInterval( () => {
+            this.getCapsuleInfo(bleMac);
+            this.getThermometerPcbaData(bleMac);
+            this.getPressurePcbaData(bleMac);
+            this.getRfPcbaData(bleMac);
+        }, 1000);
 
     }
 
@@ -48,6 +61,26 @@ class CapsulePcba extends React.Component {
             }
         } else {
             this.putThermometerPcbaState(bleMac, state);
+        }
+    }
+
+    onPressPressurePcba(bleMac, state) {
+        if (state == 0) {
+            if (window.confirm('確定要重新開始測試嗎?')) {
+                this.putPressurePcbaState(bleMac, state);
+            }
+        } else {
+            this.putPressurePcbaState(bleMac, state);
+        }
+    }
+
+    onPressRfPcba(bleMac, state) {
+        if (state == 0) {
+            if (window.confirm('確定要重新開始測試嗎?')) {
+                this.putRfPcbaState(bleMac, state);
+            }
+        } else {
+            this.putRfPcbaState(bleMac, state);
         }
     }
 
@@ -67,6 +100,40 @@ class CapsulePcba extends React.Component {
                 })
                 this.setState({
                     thermoData: response.response
+                })
+            })
+            .catch(err => console.error(err));
+    };
+
+    getPressurePcbaData = (bleMac) => {
+        fetch('/api/capsule/pressure_pcba/' + bleMac, {
+            method: 'GET',
+            headers: {"Content-Type": "application/json"},
+        })
+            .then(response => response.json())
+            .then(response => {
+                response.response.map(entry => {
+                    entry.timestamp = moment(entry.timestamp).format('YYYY-MM-DD HH:mm:ss')
+                })
+                this.setState({
+                    pressureData: response.response
+                })
+            })
+            .catch(err => console.error(err));
+    };
+
+    getRfPcbaData = (bleMac) => {
+        fetch('/api/capsule/rf_pcba/' + bleMac, {
+            method: 'GET',
+            headers: {"Content-Type": "application/json"},
+        })
+            .then(response => response.json())
+            .then(response => {
+                response.response.map(entry => {
+                    entry.timestamp = moment(entry.timestamp).format('YYYY-MM-DD HH:mm:ss')
+                })
+                this.setState({
+                    rfData: response.response
                 })
             })
             .catch(err => console.error(err));
@@ -143,12 +210,54 @@ class CapsulePcba extends React.Component {
             .catch(err => console.error(err));
     };
 
+    putRfPcbaState = (bleMac, state) => {
+        var urlencoded = new URLSearchParams();
+        urlencoded.append("mac", bleMac);
+        urlencoded.append("state", state);
+
+        fetch('/api/capsule/rf_pcba', {
+            method: 'PUT',
+            body: urlencoded
+        })
+            .then(response => response.json())
+            .then(response => {
+                if (response.code == 200) {
+                    this.setState({
+                        rfPcbaState: state,
+                    })
+                }
+            })
+            .catch(err => console.error(err));
+    };
+
+    putPressurePcbaState = (bleMac, state) => {
+        var urlencoded = new URLSearchParams();
+        urlencoded.append("mac", bleMac);
+        urlencoded.append("state", state);
+
+        fetch('/api/capsule/pressure_pcba', {
+            method: 'PUT',
+            body: urlencoded
+        })
+            .then(response => response.json())
+            .then(response => {
+                if (response.code == 200) {
+                    this.setState({
+                        pressurePcbaState: state,
+                    })
+                }
+            })
+            .catch(err => console.error(err));
+    };
+
     render() {
 
         const {
             bleMac,
             isThermoDataFetch,
             thermoData,
+            pressureData,
+            rfData,
             isBleDataFetch,
             bleData, bleReceiverData
         } = this.state;
@@ -172,6 +281,38 @@ class CapsulePcba extends React.Component {
                         }}
                         Toggle={this.state.thermometerPcbaState}/>
                 }
+                {bleMac !== '' &&
+                    <SecurityMainCard
+                        Heading="PCBA氣壓測試"
+                        StartTime={this.state.pressurePcbaStartTime}
+                        EndTime={this.state.pressurePcbaEndTime}
+                        OnClick={() => {
+                            if (this.state.pressurePcbaState == 0) {
+                                this.onPressPressurePcba(this.state.bleMac, 1);
+                            } else if (this.state.pressurePcbaState == 1) {
+                                this.onPressPressurePcba(this.state.bleMac, 2);
+                            } else {
+                                this.onPressPressurePcba(this.state.bleMac, 0);
+                            }
+                        }}
+                        Toggle={this.state.pressurePcbaState}/>
+                }
+                {bleMac !== '' &&
+                    <SecurityMainCard
+                        Heading="PCBA RF測試"
+                        StartTime={this.state.rfPcbaStartTime}
+                        EndTime={this.state.rfPcbaEndTime}
+                        OnClick={() => {
+                            if (this.state.rfPcbaState == 0) {
+                                this.onPressRfPcba(this.state.bleMac, 1);
+                            } else if (this.state.rfPcbaState == 1) {
+                                this.onPressRfPcba(this.state.bleMac, 2);
+                            } else {
+                                this.onPressRfPcba(this.state.bleMac, 0);
+                            }
+                        }}
+                        Toggle={this.state.rfPcbaState}/>
+                }
 
 
                 {bleMac !== '' &&
@@ -185,6 +326,16 @@ class CapsulePcba extends React.Component {
                     <ThermometerTable
                         width="col-md-6"
                         thermoData={thermoData}/>
+                }
+                {bleMac !== '' &&
+                    <PressureTable
+                        width="col-md-6"
+                        pressureData={pressureData}/>
+                }
+                {bleMac !== '' &&
+                    <RfTable
+                        width="col-md-6"
+                        rfData={rfData}/>
                 }
                 {bleMac !== '' &&
                     <BlePcbaTable

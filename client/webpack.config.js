@@ -18,6 +18,9 @@ module.exports = {
     library: 'ReactSummernote',
     libraryTarget: 'umd'
   },
+  devServer:{
+    historyApiFallback: true
+  },
   externals: [{
     react: {
       root: 'React',

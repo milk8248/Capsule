@@ -7,10 +7,11 @@ class SecurityMainCard extends React.Component {
       OnClick,
       Toggle,
       Value,
-      ShowValue
+      ShowValue,
+      width = "col-lg-4 col-md-4 col-md-12"
     } = this.props;
     return (
-      <div className="col-lg-4 col-md-4 col-md-12">
+      <div className={width}>
         <div className="card">
           <div className="body">
             <div className="clearfix">

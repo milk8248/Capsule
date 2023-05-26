@@ -22,11 +22,15 @@ server.on('listening', onListening);
 
 app.use(logger('dev'));
 app.use(express.json());
-app.use(express.static(absolutePath.default()));
+console.log(absolutePath.default());
+app.use('/',express.static(absolutePath.default()));
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
 app.use('/api', apiRouter);
+app.get('*', (req, res) => {
+    res.sendFile(absolutePath.default() + '/index.html');
+});
 
 process.on('uncaughtException', error => {
     console.log('uncaughtException', error.message);

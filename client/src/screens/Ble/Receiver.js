@@ -33,9 +33,11 @@ class Receiver extends React.Component {
             bleReceiverData: []
         };
 
-        this.getReceiverInfo(bleMac);
-        this.getBleReceiverData(bleMac);
-        this.getRecevierPressureData(bleMac);
+        setInterval( () => {
+            this.getReceiverInfo(bleMac);
+            this.getBleReceiverData(bleMac);
+            this.getRecevierPressureData(bleMac);
+        }, 1000);
 
     }
 
