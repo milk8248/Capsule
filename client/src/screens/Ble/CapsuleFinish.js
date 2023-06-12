@@ -27,12 +27,15 @@ class Capsule extends React.Component {
             bleMac: bleMac,
             thermoData: [],
             pressureData: [],
-            rfData:[],
+            rfData: [],
             airtightnessData: 'Null',
             isBleDataFetch: false,
             airtightnessState: 0,
             thermometerState: 0,
-            pressureState: 0,
+            // pressureState: 0,
+            pressure750State: 0,
+            pressure800State: 0,
+            pressure850State: 0,
             rfState: 0,
             airtightnessStartTime: '',
             airtightnessEndTime: '',
@@ -46,7 +49,7 @@ class Capsule extends React.Component {
             bleReceiverData: []
         };
 
-        setInterval( () => {
+        setInterval(() => {
             this.getCapsuleInfo(bleMac);
             this.getBleData(bleMac);
             this.getBleReceiverData(bleMac);
@@ -55,50 +58,30 @@ class Capsule extends React.Component {
             this.getAirtightnessData(bleMac);
             this.getRfData(bleMac);
         }, 1000);
-        
+
     }
 
-    onPressAir(bleMac, state) {
+    onPressState(bleMac, type, state) {
         if (state == 0) {
             if (window.confirm('確定要重新開始測試嗎?')) {
-                this.putAirtightnessState(bleMac, state);
-                this.getAirtightnessData(bleMac);
+                this.putState(bleMac, type, state);
             }
         } else {
-            this.putAirtightnessState(bleMac, state);
-            this.getAirtightnessData(bleMac);
+            this.putState(bleMac, type, state);
         }
     }
 
-    onPressThermometer(bleMac, state) {
-        if (state == 0) {
-            if (window.confirm('確定要重新開始測試嗎?')) {
-                this.putThermometerState(bleMac, state);
-            }
-        } else {
-            this.putThermometerState(bleMac, state);
-        }
-    }
-
-    onPressPressure(bleMac, state) {
-        if (state == 0) {
-            if (window.confirm('確定要重新開始測試嗎?')) {
-                this.putPressureState(bleMac, state);
-            }
-        } else {
-            this.putPressureState(bleMac, state);
-        }
-    }
-
-    onPressRf(bleMac, state) {
-        if (state == 0) {
-            if (window.confirm('確定要重新開始測試嗎?')) {
-                this.putRfState(bleMac, state);
-            }
-        } else {
-            this.putRfState(bleMac, state);
-        }
-    }
+    // onPressAir(bleMac, state) {
+    //     if (state == 0) {
+    //         if (window.confirm('確定要重新開始測試嗎?')) {
+    //             this.putAirtightnessState(bleMac, state);
+    //             this.getAirtightnessData(bleMac);
+    //         }
+    //     } else {
+    //         this.putAirtightnessState(bleMac, state);
+    //         this.getAirtightnessData(bleMac);
+    //     }
+    // }
 
     handleMacChange(text) {
         this.setState({
@@ -195,9 +178,17 @@ class Capsule extends React.Component {
             .then(response => {
                 if (response.response.length > 0) {
                     this.setState({
-                        airtightnessState: response.response[0].airtightness_state,
-                        thermometerState: response.response[0].thermometer_state,
-                        pressureState: response.response[0].pressure_state,
+                        airtightnessState: response.response[0].airtightness,
+                        pressure750State: response.response[0].pressure_750,
+                        pressure800State: response.response[0].pressure_800,
+                        pressure850State: response.response[0].pressure_850,
+                        thermometerState: response.response[0].thermometer,
+                        rfState: response.response[0].rf,
+                        pressure750PcbaState: response.response[0].pressure_750_pcba,
+                        pressure800PcbaState: response.response[0].pressure_800_pcba,
+                        pressure850PcbaState: response.response[0].pressure_850_pcba,
+                        thermometerPcbaState: response.response[0].thermometer_pcba,
+                        rfPcbaState: response.response[0].rf_pcba,
                     })
                 }
             })
@@ -239,89 +230,51 @@ class Capsule extends React.Component {
             .catch(err => console.error(err));
     };
 
-    putAirtightnessState = (bleMac, state) => {
+    putState = (bleMac, type, state) => {
         var urlencoded = new URLSearchParams();
-        // console.log(bleMac)
         urlencoded.append("mac", bleMac);
         urlencoded.append("state", state);
 
-        fetch('/api/capsule/airtightness', {
+        fetch('/api/state/' + type, {
             method: 'PUT',
             body: urlencoded
         })
             .then(response => response.json())
             .then(response => {
                 if (response.code == 200) {
-                    this.setState({
-                        airtightnessState: state
-                    })
+                    if (response.response.length > 0) {
+                        switch (response.response[0].type) {
+                            case 'thermometer':
+                                this.setState({
+                                    thermometerState: state
+                                })
+                                break;
+                            case 'rf':
+                                this.setState({
+                                    rfState: state
+                                })
+                                break;
+                            case 'pressure_750':
+                                this.setState({
+                                    pressure750State: state
+                                })
+                                break;
+                            case 'pressure_800':
+                                this.setState({
+                                    pressure800State: state
+                                })
+                                break;
+                            case 'pressure_850':
+                                this.setState({
+                                    pressure850State: state
+                                })
+                                break;
+                        }
+                    }
                 }
             })
             .catch(err => console.error(err));
     };
-
-    putThermometerState = (bleMac, state) => {
-        var urlencoded = new URLSearchParams();
-        urlencoded.append("mac", bleMac);
-        urlencoded.append("state", state);
-
-        fetch('/api/capsule/thermometer', {
-            method: 'PUT',
-            body: urlencoded
-        })
-            .then(response => response.json())
-            .then(response => {
-                if (response.code == 200) {
-                    this.setState({
-                        thermometerState: state,
-                    })
-                }
-            })
-            .catch(err => console.error(err));
-    };
-
-    putPressureState = (bleMac, state) => {
-        var urlencoded = new URLSearchParams();
-        // console.log(bleMac)
-        urlencoded.append("mac", bleMac);
-        urlencoded.append("state", state);
-
-        fetch('/api/capsule/pressure', {
-            method: 'PUT',
-            body: urlencoded
-        })
-            .then(response => response.json())
-            .then(response => {
-                if (response.code == 200) {
-                    this.setState({
-                        pressureState: state,
-                    })
-                }
-            })
-            .catch(err => console.error(err));
-    };
-
-    putRfState = (bleMac, state) => {
-        var urlencoded = new URLSearchParams();
-        // console.log(bleMac)
-        urlencoded.append("mac", bleMac);
-        urlencoded.append("state", state);
-
-        fetch('/api/capsule/rf', {
-            method: 'PUT',
-            body: urlencoded
-        })
-            .then(response => response.json())
-            .then(response => {
-                if (response.code == 200) {
-                    this.setState({
-                        rfState: state,
-                    })
-                }
-            })
-            .catch(err => console.error(err));
-    };
-
 
     render() {
 
@@ -346,11 +299,11 @@ class Capsule extends React.Component {
                         width="col-lg-3 col-md-3 col-md-12"
                         OnClick={() => {
                             if (this.state.airtightnessState == 0) {
-                                this.onPressAir(this.state.bleMac, 1);
+                                this.onPressState(this.state.bleMac, 'airtightness', 1);
                             } else if (this.state.airtightnessState == 1) {
-                                this.onPressAir(this.state.bleMac, 2);
+                                this.onPressState(this.state.bleMac, 'airtightness', 2);
                             } else {
-                                this.onPressAir(this.state.bleMac, 0);
+                                this.onPressState(this.state.bleMac, 'airtightness', 0);
                             }
                         }}
                         Toggle={this.state.airtightnessState}/>
@@ -363,31 +316,63 @@ class Capsule extends React.Component {
                         width="col-lg-3 col-md-3 col-md-12"
                         OnClick={() => {
                             if (this.state.thermometerState == 0) {
-                                this.onPressThermometer(this.state.bleMac, 1);
+                                this.onPressState(this.state.bleMac, 'thermometer', 1);
                             } else if (this.state.thermometerState == 1) {
-                                this.onPressThermometer(this.state.bleMac, 2);
+                                this.onPressState(this.state.bleMac, 'thermometer', 2);
                             } else {
-                                this.onPressThermometer(this.state.bleMac, 0);
+                                this.onPressState(this.state.bleMac, 'thermometer', 0);
                             }
                         }}
-                        Toggle={this.state.thermometerState}/>
+                        Toggle={this.state.thermometerState}
+                        ShowInput={true}
+                    />
                 }
                 {bleMac !== '' &&
                     <SecurityMainCard
-                        Heading="氣壓測試"
-                        StartTime={this.state.pressureStartTime}
-                        EndTime={this.state.pressureEndTime}
+                        Heading="氣壓750測試"
                         width="col-lg-3 col-md-3 col-md-12"
                         OnClick={() => {
-                            if (this.state.pressureState == 0) {
-                                this.onPressPressure(this.state.bleMac, 1);
-                            } else if (this.state.pressureState == 1) {
-                                this.onPressPressure(this.state.bleMac, 2);
+                            if (this.state.pressure750State == 0) {
+                                this.onPressState(this.state.bleMac, 'pressure_750', 1);
+                            } else if (this.state.pressure750State == 1) {
+                                this.onPressState(this.state.bleMac, 'pressure_750', 2);
                             } else {
-                                this.onPressPressure(this.state.bleMac, 0);
+                                this.onPressState(this.state.bleMac, 'pressure_750', 0);
                             }
                         }}
-                        Toggle={this.state.pressureState}
+                        Toggle={this.state.pressure750State}
+                    />
+                }
+                {bleMac !== '' &&
+                    <SecurityMainCard
+                        Heading="氣壓800測試"
+                        width="col-lg-3 col-md-3 col-md-12"
+                        OnClick={() => {
+                            if (this.state.pressure800State == 0) {
+                                this.onPressState(this.state.bleMac, 'pressure_800', 1);
+                            } else if (this.state.pressure800State == 1) {
+                                this.onPressState(this.state.bleMac, 'pressure_800', 2);
+                            } else {
+                                this.onPressState(this.state.bleMac, 'pressure_800', 0);
+                            }
+                        }}
+                        Toggle={this.state.pressure800State}
+                    />
+                }
+                {bleMac !== '' &&
+                    <SecurityMainCard
+                        Heading="氣壓850測試"
+                        width="col-lg-3 col-md-3 col-md-12"
+                        OnClick={() => {
+                            if (this.state.pressure850State == 0) {
+                                this.onPressState(this.state.bleMac, 'pressure_850', 1);
+                            } else if (this.state.pressure850State == 1) {
+                                this.onPressState(this.state.bleMac, 'pressure_850', 2);
+                            } else {
+                                this.onPressState(this.state.bleMac, 'pressure_850', 0);
+                            }
+                        }}
+                        Toggle={this.state.pressure850State}
                     />
                 }
 
@@ -399,11 +384,11 @@ class Capsule extends React.Component {
                         width="col-lg-3 col-md-3 col-md-12"
                         OnClick={() => {
                             if (this.state.rfState == 0) {
-                                this.onPressRf(this.state.bleMac, 1);
+                                this.onPressState(this.state.bleMac,'rf', 1);
                             } else if (this.state.rfState == 1) {
-                                this.onPressRf(this.state.bleMac, 2);
+                                this.onPressState(this.state.bleMac,'rf', 2);
                             } else {
-                                this.onPressRf(this.state.bleMac, 0);
+                                this.onPressState(this.state.bleMac,'rf', 0);
                             }
                         }}
                         Toggle={this.state.rfState}

@@ -37,7 +37,7 @@ router.get('/', function (req, res, next) {
 });
 
 router.get('/capsule', function (req, res, next) {
-    db.db_query('Select * From capsule.capsule')
+    db.db_query('SELECT csv.*, ad.value as airtightness_data FROM capsule.capsule_state_v csv LEFT JOIN capsule.airtightness_data_v ad on csv.mac = ad.mac')
         .then(data => {
             res.json(data)
         })
@@ -49,10 +49,8 @@ router.get('/capsule', function (req, res, next) {
 //新增膠囊
 router.post('/capsule', function (req, res, next) {
     const reqBodyData = [req.body.mac.toLowerCase()];
-    console.log(reqBodyData)
     db.db_query('Select * From capsule.capsule Where mac = $1', reqBodyData)
         .then(data => {
-            console.log(data.response.length)
             if (data.response.length == 0) {
                 const payload = [moment().format(), req.body.mac.toLowerCase()];
                 db.db_insert('INSERT INTO capsule.capsule (timestamp, mac) VALUES ($1, $2)', payload)
@@ -80,7 +78,7 @@ router.post('/capsule', function (req, res, next) {
 
 router.get('/capsule/:mac', function (req, res, next) {
     const data = [req.params.mac];
-    db.db_query('Select * From capsule.capsule where mac = $1', data)
+    db.db_query('Select * From capsule.capsule_state_v where mac = $1', data)
         .then(data => {
             res.json(data)
         })
@@ -295,9 +293,10 @@ router.get('/insert', function (req, res, next) {
     })
 });
 
-//查詢目前要測量溫度的膠囊MAC
-router.get('/thermometer', function (req, res, next) {
-    db.db_query('Select * From capsule.capsule Where thermometer_state = 1')
+//New查詢目前要測量Type的膠囊MAC
+router.get('/capsule/state/:mac', function (req, res, next) {
+    const data = [req.params.mac];
+    db.db_query('Select * From capsule.capsule_state Where mac = $1', data)
         .then(data => {
             res.json(data)
         })
@@ -306,9 +305,10 @@ router.get('/thermometer', function (req, res, next) {
         });
 });
 
-//查詢目前要測量溫度的膠囊PCBA MAC
-router.get('/thermometer_pcba', function (req, res, next) {
-    db.db_query('Select * From capsule.capsule Where thermometer_pcba_state = 1')
+//New查詢目前要測量Type的膠囊MAC
+router.get('/state/:type', function (req, res, next) {
+    const data = [req.params.type];
+    db.db_query('Select * From capsule.capsule_state Where type = $1 and state = 1', data)
         .then(data => {
             res.json(data)
         })
@@ -317,33 +317,90 @@ router.get('/thermometer_pcba', function (req, res, next) {
         });
 });
 
-
-//查詢目前要測量壓力的膠囊MAC
-router.get('/pressure', function (req, res, next) {
-    db.db_query('Select * From capsule.capsule Where pressure_state = 1')
-        .then(data => {
-            res.json(data)
-        })
-        .catch(error => {
-            res.status(500).send(error);
-        });
-});
-
-//查詢目前要測量氣密的膠囊MAC
-router.get('/airtightness', function (req, res, next) {
-    db.db_query('Select * From capsule.capsule Where airtightness_state = 1')
-        .then(data => {
-            res.json(data)
-        })
-        .catch(error => {
-            res.status(500).send(error);
-        });
-});
+//更新目前要測量Type的膠囊MAC
+router.put('/state/:type', (req, res) => {
+    const payload = [moment().format(), req.body.mac.toLowerCase(), req.params.type, req.body.state]
+    switch (req.body.state) {
+        case '0':
+            db.db_delete("DELETE FROM capsule.capsule_state WHERE mac = $1 and type = $2", [req.body.mac.toLowerCase(), req.params.type])
+                .then(result => {
+                    res.json({
+                        code: 200,
+                        massage: 'update success',
+                        response: [{
+                            mac: payload[0],
+                            type: payload[2],
+                            state: payload[3],
+                        }]
+                    })
+                })
+                .catch(error => {
+                    res.status(500).send(error)
+                });
+            break;
+        case '1':
+            const data = [moment().format(), req.body.mac.toLowerCase(), req.params.type]
+            db.db_update('UPDATE capsule.capsule_state SET state = 2, endtime = $1 WHERE state = 1 and type = $3 and mac != $2', data)
+                .then(result => {
+                    res.json({
+                        code: 200,
+                        massage: 'update success',
+                        response: [{
+                            mac: payload[0],
+                            type: payload[2],
+                            state: payload[3],
+                        }]
+                    })
+                })
+                .catch(error => {
+                    res.status(500).send(error)
+                });
+            db.db_insert('INSERT INTO capsule.capsule_state (timestamp, mac, type, state, starttime) VALUES ($1, $2, $3, $4, $1) ON CONFLICT (mac, type) DO UPDATE SET state = $4, starttime = $1', payload)
+                .then(result => {
+                    res.json({
+                        code: 200,
+                        massage: 'update success',
+                        response: [{
+                            mac: payload[0],
+                            type: payload[2],
+                            state: payload[3],
+                        }]
+                    })
+                })
+                .catch(error => {
+                    res.status(500).send(error)
+                });
+            break;
+        case '2':
+            db.db_insert('INSERT INTO capsule.capsule_state (timestamp, mac, type, state, starttime, endtime) VALUES ($1, $2, $3, $4, $1, $1) ON CONFLICT (mac, type) DO UPDATE SET state = $4, endtime = $1', payload)
+                .then(result => {
+                    res.json({
+                        code: 200,
+                        massage: 'update success',
+                        response: [{
+                            mac: payload[0],
+                            type: payload[2],
+                            state: payload[3],
+                        }]
+                    })
+                })
+                .catch(error => {
+                    res.status(500).send(error)
+                });
+            break;
+        default:
+            res.status(500).send({
+                code: 500,
+                massage: 'state error',
+                response: []
+            })
+    }
+})
 
 //新增溫度儀器的數值
 router.post('/thermometer', function (req, res, next) {
     if (isNumeric(req.body.value1) && isNumeric(req.body.value2) && isNumeric(req.body.value3) && isNumeric(req.body.value4)) {
-        db.db_query('Select * From capsule.capsule Where thermometer_state = 1')
+        db.db_query('Select * From capsule.capsule_state_v Where thermometer = 1')
             .then(data => {
                 if (data.response.length > 0) {
                     const payload = [moment().format(), data.response[0].mac, req.body.value1, req.body.value2, req.body.value3, req.body.value4, req.body.raw];
@@ -384,7 +441,7 @@ router.post('/thermometer', function (req, res, next) {
 //新增PCBA溫度儀器的數值
 router.post('/thermometer_pcba', function (req, res, next) {
     if (isNumeric(req.body.value1) && isNumeric(req.body.value2) && isNumeric(req.body.value3) && isNumeric(req.body.value4)) {
-        db.db_query('Select * From capsule.capsule Where thermometer_pcba_state = 1')
+        db.db_query('Select * From capsule.capsule_state_v Where thermometer_pcba = 1')
             .then(data => {
                 if (data.response.length > 0) {
                     const payload = [moment().format(), data.response[0].mac, req.body.value1, req.body.value2, req.body.value3, req.body.value4, req.body.raw];
@@ -423,13 +480,13 @@ router.post('/thermometer_pcba', function (req, res, next) {
 });
 
 //新增壓力儀器的數值
-router.post('/pressure', function (req, res, next) {
+router.post('/pressure/:type', function (req, res, next) {
     if (isNumeric(req.body.value)) {
-        db.db_query('Select * From capsule.capsule Where pressure_state = 1')
+        db.db_query('Select * From capsule.capsule_state_v Where pressure_' + req.params.type + ' = 1')
             .then(data => {
                 if (data.response.length > 0) {
-                    const payload = [moment().format(), data.response[0].mac, req.body.value, req.body.raw];
-                    db.db_insert('INSERT INTO capsule.pressure_data (timestamp, mac, value, raw) VALUES ($1, $2, $3, $4)', payload)
+                    const payload = [moment().format(), data.response[0].mac, req.body.value, req.body.raw, req.params.type];
+                    db.db_insert('INSERT INTO capsule.pressure_data (timestamp, mac, value, raw, type) VALUES ($1, $2, $3, $4, $5)', payload)
                         .then(data => {
                             res.json({
                                 code: 200,
@@ -459,15 +516,14 @@ router.post('/pressure', function (req, res, next) {
         })
     }
 });
-
 //新增PCBA壓力儀器的數值
-router.post('/pressure_pcba', function (req, res, next) {
+router.post('/pressure_pcba/:type', function (req, res, next) {
     if (isNumeric(req.body.value)) {
-        db.db_query('Select * From capsule.capsule Where pressure_pcba_state = 1')
+        db.db_query('Select * From capsule.capsule_state_v Where pressure_' + req.params.type + '_pcba = 1')
             .then(data => {
                 if (data.response.length > 0) {
-                    const payload = [moment().format(), data.response[0].mac, req.body.value, req.body.raw];
-                    db.db_insert('INSERT INTO capsule.pressure_pcba_data (timestamp, mac, value, raw) VALUES ($1, $2, $3, $4)', payload)
+                    const payload = [moment().format(), data.response[0].mac, req.body.value, req.body.raw, req.params.type];
+                    db.db_insert('INSERT INTO capsule.pressure_pcba_data (timestamp, mac, value, raw, type) VALUES ($1, $2, $3, $4, $5)', payload)
                         .then(data => {
                             res.json({
                                 code: 200,
@@ -500,47 +556,40 @@ router.post('/pressure_pcba', function (req, res, next) {
 
 //新增氣密儀器的數值
 router.post('/airtightness', function (req, res, next) {
-    if (isNumeric(req.body.value)) {
-        db.db_query('Select * From capsule.capsule Where airtightness_state = 1')
-            .then(data => {
-                if (data.response.length > 0) {
-                    const payload = [moment().format(), data.response[0].mac, req.body.value, req.body.raw];
-                    db.db_insert('INSERT INTO capsule.airtightness_data (timestamp, mac, value, raw) VALUES ($1, $2, $3, $4)', payload)
-                        .then(data => {
-                            res.json({
-                                code: 200,
-                                massage: '寫入成功',
-                                response: [{
-                                    timestamp: payload[0],
-                                    mac: payload[1],
-                                    value: payload[2],
-                                    raw: payload[3]
-                                }]
-                            })
+    db.db_query('Select * From capsule.capsule_state_v Where airtightness = 1')
+        .then(data => {
+            if (data.response.length > 0) {
+                const payload = [moment().format(), data.response[0].mac, req.body.value, req.body.raw];
+                db.db_insert('INSERT INTO capsule.airtightness_data (timestamp, mac, value, raw) VALUES ($1, $2, $3, $4)', payload)
+                    .then(data => {
+                        res.json({
+                            code: 200,
+                            massage: '寫入成功',
+                            response: [{
+                                timestamp: payload[0],
+                                mac: payload[1],
+                                value: payload[2],
+                                raw: payload[3]
+                            }]
                         })
-                } else {
-                    res.json({
-                        code: 500,
-                        massage: '目前沒有要量測氣密的膠囊'
                     })
-                }
-            })
-            .catch(error => {
-                res.status(500).send(error);
-            });
-    } else {
-        res.json({
-            code: 500,
-            massage: '輸入格式錯誤'
+            } else {
+                res.json({
+                    code: 500,
+                    massage: '目前沒有要量測氣密的膠囊'
+                })
+            }
         })
-    }
+        .catch(error => {
+            res.status(500).send(error);
+        });
 });
 
 
 //新增RF儀器的數值
 router.post('/rf', function (req, res, next) {
     if (isNumeric(req.body.value1) && isNumeric(req.body.value2) && isNumeric(req.body.threshold)) {
-        db.db_query('Select * From capsule.capsule Where rf_state = 1')
+        db.db_query('Select * From capsule.capsule_state_v Where rf = 1')
             .then(data => {
                 if (data.response.length > 0) {
                     const payload = [moment().format(), data.response[0].mac, req.body.value1, req.body.value2, req.body.result, req.body.threshold, req.body.raw];
@@ -581,7 +630,7 @@ router.post('/rf', function (req, res, next) {
 //新增RF儀器的數值
 router.post('/rf_pcba', function (req, res, next) {
     if (isNumeric(req.body.value1) && isNumeric(req.body.value2) && isNumeric(req.body.threshold)) {
-        db.db_query('Select * From capsule.capsule Where rf_pcba_state = 1')
+        db.db_query('Select * From capsule.capsule_state_v Where rf_pcba = 1')
             .then(data => {
                 if (data.response.length > 0) {
                     const payload = [moment().format(), data.response[0].mac, req.body.value1, req.body.value2, req.body.result, req.body.threshold, req.body.raw];
@@ -693,322 +742,10 @@ router.put('/receiver/pressure', (req, res) => {
     }
 })
 
-
-//更新目前要測量壓力的膠囊MAC
-router.put('/capsule/pressure', (req, res) => {
-    if (req.body.state == '0') {
-        console.log(moment().format())
-        const data = [req.body.mac.toLowerCase()];
-        db.db_update('UPDATE capsule.capsule SET pressure_state = 0 WHERE mac = $1', data)
-            .then(data => {
-                res.json(data)
-            })
-            .catch(error => {
-                res.status(500).send(error);
-            });
-    } else if (req.body.state == '1') {
-
-        db.db_update('UPDATE capsule.capsule SET pressure_state = 2, pressure_endtime = $1 WHERE pressure_state = 1', [moment().format()])
-
-        const data = [req.body.mac.toLowerCase(), moment().format()];
-        db.db_update('UPDATE capsule.capsule SET pressure_state = 1, pressure_starttime = $2 WHERE mac = $1', data)
-            .then(data => {
-                res.json(data)
-            })
-            .catch(error => {
-                res.status(500).send(error);
-            });
-    } else if (req.body.state == '2') {
-
-        const data = [req.body.mac.toLowerCase(), moment().format()];
-        db.db_update('UPDATE capsule.capsule SET pressure_state = 2, pressure_endtime = $2 WHERE mac = $1', data)
-            .then(data => {
-                res.json(data)
-            })
-            .catch(error => {
-                res.status(500).send(error);
-            });
-    }
-})
-
-//更新目前要測量PCBA溫度的膠囊MAC
-router.put('/capsule/thermometer_pcba', (req, res) => {
-    if (req.body.state == '0') {
-        const data = [req.body.mac.toLowerCase()];
-        db.db_update('UPDATE capsule.capsule SET thermometer_pcba_state = 0 WHERE mac = $1', data)
-            .then(data => {
-                res.json(data)
-            })
-            .catch(error => {
-                res.status(500).send(error);
-            });
-    } else if (req.body.state == '1') {
-
-        db.db_update('UPDATE capsule.capsule SET thermometer_pcba_state = 2, thermometer_pcba_endtime = $1 WHERE thermometer_pcba_state = 1', [moment().format()])
-        const data = [req.body.mac.toLowerCase(), moment().format()];
-        db.db_update('UPDATE capsule.capsule SET thermometer_pcba_state = 1, thermometer_pcba_starttime = $2 WHERE mac = $1', data)
-            .then(data => {
-                res.json(data)
-            })
-            .catch(error => {
-                res.status(500).send(error);
-            });
-    } else if (req.body.state == '2') {
-
-        const data = [req.body.mac.toLowerCase(), moment().format()];
-        db.db_update('UPDATE capsule.capsule SET thermometer_pcba_state = 2, thermometer_pcba_endtime = $2 WHERE mac = $1', data)
-            .then(data => {
-                res.json(data)
-            })
-            .catch(error => {
-                res.status(500).send(error);
-            });
-    } else if (req.body.state == '3') {
-
-        const data = [req.body.mac.toLowerCase(), null, null];
-        db.db_update('UPDATE capsule.capsule SET thermometer_pcba_state = 0, thermometer_pcba_starttime=$2, thermometer_pcba_endtime = $3 WHERE mac = $1', data)
-            .then(data => {
-                res.json(data)
-            })
-            .catch(error => {
-                res.status(500).send(error);
-            });
-    }
-})
-
-//更新目前要測量PCBA氣壓的膠囊MAC
-router.put('/capsule/pressure_pcba', (req, res) => {
-    if (req.body.state == '0') {
-        const data = [req.body.mac.toLowerCase()];
-        db.db_update('UPDATE capsule.capsule SET pressure_pcba_state = 0 WHERE mac = $1', data)
-            .then(data => {
-                res.json(data)
-            })
-            .catch(error => {
-                res.status(500).send(error);
-            });
-    } else if (req.body.state == '1') {
-
-        db.db_update('UPDATE capsule.capsule SET pressure_pcba_state = 2, pressure_pcba_endtime = $1 WHERE pressure_pcba_state = 1', [moment().format()])
-        const data = [req.body.mac.toLowerCase(), moment().format()];
-        db.db_update('UPDATE capsule.capsule SET pressure_pcba_state = 1, pressure_pcba_starttime = $2 WHERE mac = $1', data)
-            .then(data => {
-                res.json(data)
-            })
-            .catch(error => {
-                res.status(500).send(error);
-            });
-    } else if (req.body.state == '2') {
-
-        const data = [req.body.mac.toLowerCase(), moment().format()];
-        db.db_update('UPDATE capsule.capsule SET pressure_pcba_state = 2, pressure_pcba_endtime = $2 WHERE mac = $1', data)
-            .then(data => {
-                res.json(data)
-            })
-            .catch(error => {
-                res.status(500).send(error);
-            });
-    } else if (req.body.state == '3') {
-
-        const data = [req.body.mac.toLowerCase(), null, null];
-        db.db_update('UPDATE capsule.capsule SET pressure_pcba_state = 0, pressure_pcba_starttime=$2, pressure_pcba_endtime = $3 WHERE mac = $1', data)
-            .then(data => {
-                res.json(data)
-            })
-            .catch(error => {
-                res.status(500).send(error);
-            });
-    }
-})
-
-//更新目前要測量PCBA RF的膠囊MAC
-router.put('/capsule/rf_pcba', (req, res) => {
-    if (req.body.state == '0') {
-        const data = [req.body.mac.toLowerCase()];
-        db.db_update('UPDATE capsule.capsule SET rf_pcba_state = 0 WHERE mac = $1', data)
-            .then(data => {
-                res.json(data)
-            })
-            .catch(error => {
-                res.status(500).send(error);
-            });
-    } else if (req.body.state == '1') {
-
-        db.db_update('UPDATE capsule.capsule SET rf_pcba_state = 2, rf_pcba_endtime = $1 WHERE rf_pcba_state = 1', [moment().format()])
-        const data = [req.body.mac.toLowerCase(), moment().format()];
-        db.db_update('UPDATE capsule.capsule SET rf_pcba_state = 1, rf_pcba_starttime = $2 WHERE mac = $1', data)
-            .then(data => {
-                res.json(data)
-            })
-            .catch(error => {
-                res.status(500).send(error);
-            });
-    } else if (req.body.state == '2') {
-
-        const data = [req.body.mac.toLowerCase(), moment().format()];
-        db.db_update('UPDATE capsule.capsule SET rf_pcba_state = 2, rf_pcba_endtime = $2 WHERE mac = $1', data)
-            .then(data => {
-                res.json(data)
-            })
-            .catch(error => {
-                res.status(500).send(error);
-            });
-    } else if (req.body.state == '3') {
-
-        const data = [req.body.mac.toLowerCase(), null, null];
-        db.db_update('UPDATE capsule.capsule SET rf_pcba_state = 0, rf_pcba_starttime=$2, rf_pcba_endtime = $3 WHERE mac = $1', data)
-            .then(data => {
-                res.json(data)
-            })
-            .catch(error => {
-                res.status(500).send(error);
-            });
-    }
-})
-
-//更新目前要測量溫度的膠囊MAC
-router.put('/capsule/thermometer', (req, res) => {
-    if (req.body.state == '0') {
-        console.log(moment().format())
-        const data = [req.body.mac.toLowerCase()];
-        db.db_update('UPDATE capsule.capsule SET thermometer_state = 0 WHERE mac = $1', data)
-            .then(data => {
-                res.json(data)
-            })
-            .catch(error => {
-                res.status(500).send(error);
-            });
-    } else if (req.body.state == '1') {
-
-        db.db_update('UPDATE capsule.capsule SET thermometer_state = 2, thermometer_endtime = $1 WHERE thermometer_state = 1', [moment().format()])
-        const data = [req.body.mac.toLowerCase(), moment().format()];
-        db.db_update('UPDATE capsule.capsule SET thermometer_state = 1, thermometer_starttime = $2 WHERE mac = $1', data)
-            .then(data => {
-                res.json(data)
-            })
-            .catch(error => {
-                res.status(500).send(error);
-            });
-    } else if (req.body.state == '2') {
-
-        const data = [req.body.mac.toLowerCase(), moment().format()];
-        db.db_update('UPDATE capsule.capsule SET thermometer_state = 2, thermometer_endtime = $2 WHERE mac = $1', data)
-            .then(data => {
-                res.json(data)
-            })
-            .catch(error => {
-                res.status(500).send(error);
-            });
-    } else if (req.body.state == '3') {
-
-        const data = [req.body.mac.toLowerCase(), null, null];
-        db.db_update('UPDATE capsule.capsule SET thermometer_state = 0, thermometer_starttime=$2, thermometer_endtime = $3 WHERE mac = $1', data)
-            .then(data => {
-                res.json(data)
-            })
-            .catch(error => {
-                res.status(500).send(error);
-            });
-    }
-})
-
-//查詢目前要測量壓力的膠囊MAC
-router.get('/pressure', function (req, res, next) {
-    db.db_query('Select * From capsule.capsule Where pressure_state = 1')
-        .then(data => {
-            res.json(data)
-        })
-        .catch(error => {
-            res.status(500).send(error);
-        });
-});
-
-//更新目前要測量氣密的膠囊MAC
-router.put('/capsule/airtightness', (req, res) => {
-    if (req.body.state == '0') {
-        console.log(moment().format())
-        const data = [req.body.mac.toLowerCase()];
-        db.db_update('UPDATE capsule.capsule SET airtightness_state = 0 WHERE mac = $1', data)
-            .then(data => {
-                res.json(data)
-            })
-            .catch(error => {
-                res.status(500).send(error);
-            });
-    } else if (req.body.state == '1') {
-
-        db.db_update('UPDATE capsule.capsule SET airtightness_state = 2, airtightness_endtime = $1 WHERE airtightness_state = 1', [moment().format()])
-
-        const data = [req.body.mac.toLowerCase(), moment().format()];
-        db.db_update('UPDATE capsule.capsule SET airtightness_state = 1, airtightness_starttime = $2 WHERE mac = $1', data)
-            .then(data => {
-                res.json(data)
-            })
-            .catch(error => {
-                res.status(500).send(error);
-            });
-    } else if (req.body.state == '2') {
-
-        const data = [req.body.mac.toLowerCase(), moment().format()];
-        db.db_update('UPDATE capsule.capsule SET airtightness_state = 2, airtightness_endtime = $2 WHERE mac = $1', data)
-            .then(data => {
-                res.json(data)
-            })
-            .catch(error => {
-                res.status(500).send(error);
-            });
-    }
-})
-
-//更新目前要測量RF的膠囊MAC
-router.put('/capsule/rf', (req, res) => {
-    if (req.body.state == '0') {
-        const data = [req.body.mac.toLowerCase()];
-        db.db_update('UPDATE capsule.capsule SET rf_state = 0 WHERE mac = $1', data)
-            .then(data => {
-                res.json(data)
-            })
-            .catch(error => {
-                res.status(500).send(error);
-            });
-    } else if (req.body.state == '1') {
-
-        db.db_update('UPDATE capsule.capsule SET rf_state = 2, rf_endtime = $1 WHERE rf_state = 1', [moment().format()])
-        const data = [req.body.mac.toLowerCase(), moment().format()];
-        db.db_update('UPDATE capsule.capsule SET rf_state = 1, rf_starttime = $2 WHERE mac = $1', data)
-            .then(data => {
-                res.json(data)
-            })
-            .catch(error => {
-                res.status(500).send(error);
-            });
-    } else if (req.body.state == '2') {
-
-        const data = [req.body.mac.toLowerCase(), moment().format()];
-        db.db_update('UPDATE capsule.capsule SET rf_state = 2, rf_endtime = $2 WHERE mac = $1', data)
-            .then(data => {
-                res.json(data)
-            })
-            .catch(error => {
-                res.status(500).send(error);
-            });
-    } else if (req.body.state == '3') {
-
-        const data = [req.body.mac.toLowerCase(), null, null];
-        db.db_update('UPDATE capsule.capsule SET rf_state = 0, rf_starttime=$2, rf_endtime = $3 WHERE mac = $1', data)
-            .then(data => {
-                res.json(data)
-            })
-            .catch(error => {
-                res.status(500).send(error);
-            });
-    }
-})
-
 //新增藍芽膠囊讀出的數值
 router.post('/ble_data', function (req, res, next) {
     if (isNumeric(req.body.pressure) && isNumeric(req.body.temperature)) {
-        const payload = [moment().format(), req.body.mac, req.body.rssi, req.body.pressure, req.body.temperature, req.body.voltage, req.body.raw];
+        const payload = [moment().format(), req.body.mac.toLowerCase(), req.body.rssi, req.body.pressure, req.body.temperature, req.body.voltage, req.body.raw];
         db.db_insert('INSERT INTO capsule.ble_data (timestamp, mac, rssi, pressure, temperature, voltage, raw) VALUES ($1, $2, $3, $4, $5, $6, $7)', payload)
             .then(data => {
                 res.json({
@@ -1051,6 +788,57 @@ router.post('/upload_ble_receiver_csv', upload.single('file'), (req, res) => {
     })
 })
 
+//取得壓力結果
+router.post('/result/pressure', function (req, res, next) {
+
+    let pressure_data = {}
+    let ble_pressure_data={}
+
+    const payload = [req.body.mac, req.body.type];
+    db.db_query('Select * From capsule.pressure_data Where mac=$1 and type=$2 order by timestamp desc limit 5', payload)
+        .then(data => {
+            if (data.response.length == 5) {
+                let lastTimestamp = data.response[0].timestamp;
+                let firstTimestamp = data.response[4].timestamp;
+                let duration = moment(lastTimestamp) - moment(firstTimestamp)
+                if (duration >= 60000) {
+                    res.json({
+                        code: 500,
+                        massage: '資料量超過一分鐘'
+                    })
+                } else {
+                    const average = arr => arr.reduce((p, c) => p + c, 0) / arr.length;
+                    let value_array = [];
+                    for (let i = 0; i < data.response.length; i++) {
+                        value_array.push(data.response[i].value)
+                    }
+                    const value_avg = average(value_array);
+                    console.log(value_array)
+                    pressure_data = {
+                        timestamp:moment(firstTimestamp)+duration/2,
+                        value:value_avg
+                    }
+                    res.json({
+                        code: 200,
+                        massage: pressure_data
+                    })
+                }
+                console.log(moment(lastTimestamp) - moment(firstTimestamp));
+                res.json({
+                    code: 200,
+                    massage: '資料量11不足'
+                })
+            } else {
+                res.json({
+                    code: 500,
+                    massage: '資料量不足'
+                })
+            }
+        })
+        .catch(error => {
+            res.status(500).send(error);
+        });
+});
 
 function csvToDb(csvUrl) {
     let stream = fs.createReadStream(csvUrl)

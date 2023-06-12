@@ -1,6 +1,6 @@
 {
   "name": "@milk8248/capsule-client-dist",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "Capsule Client",
   "main": "index.js",
   "author": "LambertChen <LambertChen@itri.org.tw>",

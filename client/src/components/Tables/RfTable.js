@@ -3,11 +3,11 @@ import {connect} from "react-redux";
 import {Table} from 'antd';
 import moment from "moment";
 
-class PressureTable extends React.Component {
+class RfTable extends React.Component {
 
     render() {
 
-        const {pressureData, width = "col-md-3"} = this.props;
+        const {rfData, width = "col-md-3"} = this.props;
 
         const columns = [
             {
@@ -16,14 +16,24 @@ class PressureTable extends React.Component {
                 key: 'timestamp',
             },
             {
-                title: '標準',
-                dataIndex: 'type',
-                key: 'type',
+                title: 'Pass/Fail',
+                dataIndex: 'result',
+                key: 'result',
             },
             {
-                title: '壓力',
-                dataIndex: 'value',
-                key: 'pressure',
+                title: '閾值',
+                dataIndex: 'threshold',
+                key: 'threshold',
+            },
+            {
+                title: 'V1',
+                dataIndex: 'value1',
+                key: 'value1',
+            },
+            {
+                title: 'V2',
+                dataIndex: 'value2',
+                key: 'value2',
             },
         ];
 
@@ -32,14 +42,14 @@ class PressureTable extends React.Component {
                 <div className="card">
                     <div className="header">
                         <h2>
-                            壓力儀資料{" "}
+                            RF資料{" "}
                             <small>
-                                來自壓力計量測的資料
+                                來自RF量測的資料
                             </small>
                         </h2>
                     </div>
                     <div className="body table-responsive">
-                        <Table dataSource={pressureData} columns={columns}/>
+                        <Table dataSource={rfData} columns={columns}/>
                     </div>
                 </div>
             </div>
@@ -49,4 +59,4 @@ class PressureTable extends React.Component {
 
 const mapStateToProps = ({}) => ({});
 
-export default connect(mapStateToProps, {})(PressureTable);
+export default connect(mapStateToProps, {})(RfTable);

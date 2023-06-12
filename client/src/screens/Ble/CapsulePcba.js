@@ -32,7 +32,9 @@ class CapsulePcba extends React.Component {
             thermometerPcbaStartTime: '',
             thermometerPcbaEndTime: '',
             pressurePcbaData: [],
-            pressurePcbaState: 0,
+            pressure750PcbaState: 0,
+            pressure800PcbaState: 0,
+            pressure850PcbaState: 0,
             pressurePcbaStartTime: '',
             pressurePcbaEndTime: '',
             rfPcbaData: [],
@@ -43,7 +45,7 @@ class CapsulePcba extends React.Component {
             bleReceiverData: []
         };
 
-
+        // this.getCapsuleInfo(bleMac);
 
         setInterval( () => {
             this.getCapsuleInfo(bleMac);
@@ -54,35 +56,16 @@ class CapsulePcba extends React.Component {
 
     }
 
-    onPressThermometerPcba(bleMac, state) {
+    onPressState(bleMac, type, state) {
         if (state == 0) {
             if (window.confirm('確定要重新開始測試嗎?')) {
-                this.putThermometerPcbaState(bleMac, state);
+                this.putState(bleMac, type, state);
             }
         } else {
-            this.putThermometerPcbaState(bleMac, state);
+            this.putState(bleMac, type, state);
         }
     }
 
-    onPressPressurePcba(bleMac, state) {
-        if (state == 0) {
-            if (window.confirm('確定要重新開始測試嗎?')) {
-                this.putPressurePcbaState(bleMac, state);
-            }
-        } else {
-            this.putPressurePcbaState(bleMac, state);
-        }
-    }
-
-    onPressRfPcba(bleMac, state) {
-        if (state == 0) {
-            if (window.confirm('確定要重新開始測試嗎?')) {
-                this.putRfPcbaState(bleMac, state);
-            }
-        } else {
-            this.putRfPcbaState(bleMac, state);
-        }
-    }
 
     componentDidMount() {
         window.scrollTo(0, 0);
@@ -148,7 +131,17 @@ class CapsulePcba extends React.Component {
             .then(response => {
                 if (response.response.length > 0) {
                     this.setState({
-                        thermometerPcbaState: response.response[0].thermometer_pcba_state,
+                        airtightnessState: response.response[0].airtightness,
+                        pressure750State: response.response[0].pressure_750,
+                        pressure800State: response.response[0].pressure_800,
+                        pressure850State: response.response[0].pressure_850,
+                        thermometerState: response.response[0].thermometer,
+                        rfState: response.response[0].rf,
+                        pressure750PcbaState: response.response[0].pressure_750_pcba,
+                        pressure800PcbaState: response.response[0].pressure_800_pcba,
+                        pressure850PcbaState: response.response[0].pressure_850_pcba,
+                        thermometerPcbaState: response.response[0].thermometer_pcba,
+                        rfPcbaState: response.response[0].rf_pcba,
                     })
                 }
             })
@@ -190,61 +183,47 @@ class CapsulePcba extends React.Component {
             .catch(err => console.error(err));
     };
 
-    putThermometerPcbaState = (bleMac, state) => {
+    putState = (bleMac, type, state) => {
         var urlencoded = new URLSearchParams();
         urlencoded.append("mac", bleMac);
         urlencoded.append("state", state);
 
-        fetch('/api/capsule/thermometer_pcba', {
+        fetch('/api/state/' + type, {
             method: 'PUT',
             body: urlencoded
         })
             .then(response => response.json())
             .then(response => {
                 if (response.code == 200) {
-                    this.setState({
-                        thermometerPcbaState: state,
-                    })
-                }
-            })
-            .catch(err => console.error(err));
-    };
-
-    putRfPcbaState = (bleMac, state) => {
-        var urlencoded = new URLSearchParams();
-        urlencoded.append("mac", bleMac);
-        urlencoded.append("state", state);
-
-        fetch('/api/capsule/rf_pcba', {
-            method: 'PUT',
-            body: urlencoded
-        })
-            .then(response => response.json())
-            .then(response => {
-                if (response.code == 200) {
-                    this.setState({
-                        rfPcbaState: state,
-                    })
-                }
-            })
-            .catch(err => console.error(err));
-    };
-
-    putPressurePcbaState = (bleMac, state) => {
-        var urlencoded = new URLSearchParams();
-        urlencoded.append("mac", bleMac);
-        urlencoded.append("state", state);
-
-        fetch('/api/capsule/pressure_pcba', {
-            method: 'PUT',
-            body: urlencoded
-        })
-            .then(response => response.json())
-            .then(response => {
-                if (response.code == 200) {
-                    this.setState({
-                        pressurePcbaState: state,
-                    })
+                    if(response.response.length>0) {
+                        switch (response.response[0].type) {
+                            case 'thermometer_pcba':
+                                this.setState({
+                                    thermometerPcbaState: state
+                                })
+                                break;
+                            case 'rf_pcba':
+                                this.setState({
+                                    rfPcbaState: state
+                                })
+                                break;
+                            case 'pressure_750_pcba':
+                                this.setState({
+                                    pressure750PcbaState: state
+                                })
+                                break;
+                            case 'pressure_800_pcba':
+                                this.setState({
+                                    pressure800PcbaState: state
+                                })
+                                break;
+                            case 'pressure_850_pcba':
+                                this.setState({
+                                    pressure850PcbaState: state
+                                })
+                                break;
+                        }
+                    }
                 }
             })
             .catch(err => console.error(err));
@@ -267,48 +246,70 @@ class CapsulePcba extends React.Component {
 
                 {bleMac !== '' &&
                     <SecurityMainCard
+                        Heading="PCBA氣壓750測試"
+                        OnClick={() => {
+                            if (this.state.pressure750PcbaState == 0) {
+                                this.onPressState(this.state.bleMac, 'pressure_750_pcba', 1);
+                            } else if (this.state.pressure750PcbaState == 1) {
+                                this.onPressState(this.state.bleMac, 'pressure_750_pcba', 2);
+                            } else {
+                                this.onPressState(this.state.bleMac, 'pressure_750_pcba', 0);
+                            }
+                        }}
+                        Toggle={this.state.pressure750PcbaState}/>
+                }
+                {bleMac !== '' &&
+                    <SecurityMainCard
+                        Heading="PCBA氣壓800測試"
+                        OnClick={() => {
+                            if (this.state.pressure800PcbaState == 0) {
+                                this.onPressState(this.state.bleMac, 'pressure_800_pcba', 1);
+                            } else if (this.state.pressure800PcbaState == 1) {
+                                this.onPressState(this.state.bleMac, 'pressure_800_pcba', 2);
+                            } else {
+                                this.onPressState(this.state.bleMac, 'pressure_800_pcba', 0);
+                            }
+                        }}
+                        Toggle={this.state.pressure800PcbaState}/>
+                }
+                {bleMac !== '' &&
+                    <SecurityMainCard
+                        Heading="PCBA氣壓850測試"
+                        OnClick={() => {
+                            if (this.state.pressure850PcbaState == 0) {
+                                this.onPressState(this.state.bleMac, 'pressure_850_pcba', 1);
+                            } else if (this.state.pressure850PcbaState == 1) {
+                                this.onPressState(this.state.bleMac, 'pressure_850_pcba', 2);
+                            } else {
+                                this.onPressState(this.state.bleMac, 'pressure_850_pcba', 0);
+                            }
+                        }}
+                        Toggle={this.state.pressure850PcbaState}/>
+                }
+                {bleMac !== '' &&
+                    <SecurityMainCard
                         Heading="PCBA 溫度測試"
-                        StartTime={this.state.thermometerPcbaStartTime}
-                        EndTime={this.state.thermometerPcbaEndTime}
                         OnClick={() => {
                             if (this.state.thermometerPcbaState == 0) {
-                                this.onPressThermometerPcba(this.state.bleMac, 1);
+                                this.onPressState(this.state.bleMac, 'thermometer_pcba', 1);
                             } else if (this.state.thermometerPcbaState == 1) {
-                                this.onPressThermometerPcba(this.state.bleMac, 2);
+                                this.onPressState(this.state.bleMac, 'thermometer_pcba', 2);
                             } else {
-                                this.onPressThermometerPcba(this.state.bleMac, 0);
+                                this.onPressState(this.state.bleMac, 'thermometer_pcba', 0);
                             }
                         }}
                         Toggle={this.state.thermometerPcbaState}/>
                 }
                 {bleMac !== '' &&
                     <SecurityMainCard
-                        Heading="PCBA氣壓測試"
-                        StartTime={this.state.pressurePcbaStartTime}
-                        EndTime={this.state.pressurePcbaEndTime}
-                        OnClick={() => {
-                            if (this.state.pressurePcbaState == 0) {
-                                this.onPressPressurePcba(this.state.bleMac, 1);
-                            } else if (this.state.pressurePcbaState == 1) {
-                                this.onPressPressurePcba(this.state.bleMac, 2);
-                            } else {
-                                this.onPressPressurePcba(this.state.bleMac, 0);
-                            }
-                        }}
-                        Toggle={this.state.pressurePcbaState}/>
-                }
-                {bleMac !== '' &&
-                    <SecurityMainCard
                         Heading="PCBA RF測試"
-                        StartTime={this.state.rfPcbaStartTime}
-                        EndTime={this.state.rfPcbaEndTime}
                         OnClick={() => {
                             if (this.state.rfPcbaState == 0) {
-                                this.onPressRfPcba(this.state.bleMac, 1);
+                                this.onPressState(this.state.bleMac, 'rf_pcba', 1);
                             } else if (this.state.rfPcbaState == 1) {
-                                this.onPressRfPcba(this.state.bleMac, 2);
+                                this.onPressState(this.state.bleMac, 'rf_pcba', 2);
                             } else {
-                                this.onPressRfPcba(this.state.bleMac, 0);
+                                this.onPressState(this.state.bleMac, 'rf_pcba', 0);
                             }
                         }}
                         Toggle={this.state.rfPcbaState}/>
