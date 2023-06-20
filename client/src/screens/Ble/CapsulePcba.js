@@ -42,12 +42,29 @@ class CapsulePcba extends React.Component {
             rfPcbaStartTime: '',
             rfPcbaEndTime: '',
             bleData: [],
-            bleReceiverData: []
+            bleReceiverData: [],
+            threshold_pressure_750:0,
+            threshold_pressure_800:0,
+            threshold_pressure_850:0,
+            threshold_pressure_750_pcba:0,
+            threshold_pressure_800_pcba:0,
+            threshold_pressure_850_pcba:0,
+            threshold_thermometer:0,
+            threshold_thermometer_pcba:0,
+            test_pressure_750: false,
+            test_pressure_800: false,
+            test_pressure_850: false,
+            test_pressure_750_pcba: false,
+            test_pressure_800_pcba: false,
+            test_pressure_850_pcba: false,
+            test_thermometer: false,
+            test_thermometer_pcba: false
         };
 
-        // this.getCapsuleInfo(bleMac);
+        this.getCapsuleThreshold(bleMac);
 
         setInterval( () => {
+            this.getBleData(bleMac);
             this.getCapsuleInfo(bleMac);
             this.getThermometerPcbaData(bleMac);
             this.getPressurePcbaData(bleMac);
@@ -132,16 +149,46 @@ class CapsulePcba extends React.Component {
                 if (response.response.length > 0) {
                     this.setState({
                         airtightnessState: response.response[0].airtightness,
+                        rfState: response.response[0].rf,
+                        rfPcbaState: response.response[0].rf_pcba,
                         pressure750State: response.response[0].pressure_750,
                         pressure800State: response.response[0].pressure_800,
                         pressure850State: response.response[0].pressure_850,
                         thermometerState: response.response[0].thermometer,
-                        rfState: response.response[0].rf,
                         pressure750PcbaState: response.response[0].pressure_750_pcba,
                         pressure800PcbaState: response.response[0].pressure_800_pcba,
                         pressure850PcbaState: response.response[0].pressure_850_pcba,
                         thermometerPcbaState: response.response[0].thermometer_pcba,
-                        rfPcbaState: response.response[0].rf_pcba,
+                        test_pressure_750: ((response.response[0].test_pressure_750) ? "pass" : "fail"),
+                        test_pressure_800: ((response.response[0].test_pressure_800) ? "pass" : "fail"),
+                        test_pressure_850: ((response.response[0].test_pressure_850) ? "pass" : "fail"),
+                        test_pressure_750_pcba: ((response.response[0].test_pressure_750_pcba) ? "pass" : "fail"),
+                        test_pressure_800_pcba: ((response.response[0].test_pressure_800_pcba) ? "pass" : "fail"),
+                        test_pressure_850_pcba: ((response.response[0].test_pressure_850_pcba) ? "pass" : "fail"),
+                        test_thermometer: ((response.response[0].test_thermometer) ? "pass" : "fail"),
+                        test_thermometer_pcba: ((response.response[0].test_thermometer_pcba) ? "pass" : "fail"),
+                    })
+                }
+            })
+            .catch(err => console.error(err));
+    };
+    getCapsuleThreshold = (bleMac) => {
+        fetch('/api/capsule/' + bleMac, {
+            method: 'GET',
+            headers: {"Content-Type": "application/json"},
+        })
+            .then(response => response.json())
+            .then(response => {
+                if (response.response.length > 0) {
+                    this.setState({
+                        threshold_pressure_750:response.response[0].threshold_pressure_750,
+                        threshold_pressure_800:response.response[0].threshold_pressure_800,
+                        threshold_pressure_850:response.response[0].threshold_pressure_850,
+                        threshold_pressure_750_pcba:response.response[0].threshold_pressure_750_pcba,
+                        threshold_pressure_800_pcba:response.response[0].threshold_pressure_800_pcba,
+                        threshold_pressure_850_pcba:response.response[0].threshold_pressure_850_pcba,
+                        threshold_thermometer:response.response[0].threshold_thermometer,
+                        threshold_thermometer_pcba:response.response[0].threshold_thermometer_pcba
                     })
                 }
             })
@@ -149,7 +196,7 @@ class CapsulePcba extends React.Component {
     };
 
     getBleData = (bleMac) => {
-        fetch('/api/ble_data/' + bleMac, {
+        fetch('/api/ble_pcba_data/' + bleMac, {
             method: 'GET',
             headers: {"Content-Type": "application/json"},
         })
@@ -165,6 +212,53 @@ class CapsulePcba extends React.Component {
             })
             .catch(err => console.error(err));
     };
+
+    handleInputChange = (type, e) => {
+        switch (type) {
+            case "pressure_750":
+                this.setState({
+                    threshold_pressure_750: e.target.value,
+                })
+                break
+            case "pressure_800":
+                this.setState({
+                    threshold_pressure_800: e.target.value,
+                })
+                break
+            case "pressure_850":
+                this.setState({
+                    threshold_pressure_850: e.target.value,
+                })
+                break
+            case "pressure_750_pcba":
+                this.setState({
+                    threshold_pressure_750_pcba: e.target.value,
+                })
+                break
+            case "pressure_800_pcba":
+                this.setState({
+                    threshold_pressure_800_pcba: e.target.value,
+                })
+                break
+            case "pressure_850_pcba":
+                this.setState({
+                    threshold_pressure_850_pcba: e.target.value,
+                })
+                break
+            case "thermometer":
+                this.setState({
+                    threshold_thermometer: e.target.value,
+                })
+                break
+            case "thermometer_pcba":
+                this.setState({
+                    threshold_thermometer_pcba: e.target.value,
+                })
+                break
+            default:
+                break
+        }
+    }
 
     getBleReceiverData = (bleMac) => {
         fetch('/api/ble_receiver_data/' + bleMac, {
@@ -229,6 +323,61 @@ class CapsulePcba extends React.Component {
             .catch(err => console.error(err));
     };
 
+    handleThresholdChange = (type) => {
+        switch (type) {
+            case "pressure_750":
+                this.putCapsuleThreshold(type, this.state.threshold_pressure_750)
+                break
+            case "pressure_800":
+                this.putCapsuleThreshold(type, this.state.threshold_pressure_800)
+                break
+            case "pressure_850":
+                this.putCapsuleThreshold(type, this.state.threshold_pressure_850)
+                break
+            case "pressure_750_pcba":
+                this.putCapsuleThreshold(type, this.state.threshold_pressure_750_pcba)
+                break
+            case "pressure_800_pcba":
+                this.putCapsuleThreshold(type, this.state.threshold_pressure_800_pcba)
+                break
+            case "pressure_850_pcba":
+                this.putCapsuleThreshold(type, this.state.threshold_pressure_850_pcba)
+                break
+            case "thermometer":
+                this.putCapsuleThreshold(type, this.state.threshold_thermometer)
+                break
+            case "thermometer_pcba":
+                this.putCapsuleThreshold(type, this.state.threshold_thermometer_pcba)
+                break
+            default:
+                break
+        }
+    }
+
+    putCapsuleThreshold = (type, value) => {
+        var urlencoded = new URLSearchParams();
+        urlencoded.append("type", type);
+        urlencoded.append("value", value);
+        urlencoded.append("mac", this.state.bleMac);
+        fetch('/api/capsule/threshold', {
+            method: 'PUT',
+            body: urlencoded
+        })
+            .then(response => response.json())
+            .then(response => {
+                if (response.code == 200) {
+                    alert('更新成功!')
+                    this.getCapsuleThreshold(this.state.bleMac);
+
+                } else if (response.code == 500) {
+                    alert(response.massage)
+                } else {
+                    alert("輸入有錯誤")
+                }
+            })
+            .catch(err => console.error(err));
+    };
+
     render() {
 
         const {
@@ -256,7 +405,18 @@ class CapsulePcba extends React.Component {
                                 this.onPressState(this.state.bleMac, 'pressure_750_pcba', 0);
                             }
                         }}
-                        Toggle={this.state.pressure750PcbaState}/>
+                        Toggle={this.state.pressure750PcbaState}
+                        ShowInput={true}
+                        Threshold={this.state.threshold_pressure_750_pcba}
+                        Value={this.state.test_pressure_750_pcba}
+                        ShowValue={true}
+                        handleInputChange={(text) => {
+                            this.handleInputChange("pressure_750_pcba", text);
+                        }}
+                        handleThresholdChange={() => {
+                            this.handleThresholdChange("pressure_750_pcba");
+                        }}
+                    />
                 }
                 {bleMac !== '' &&
                     <SecurityMainCard
@@ -270,7 +430,18 @@ class CapsulePcba extends React.Component {
                                 this.onPressState(this.state.bleMac, 'pressure_800_pcba', 0);
                             }
                         }}
-                        Toggle={this.state.pressure800PcbaState}/>
+                        Toggle={this.state.pressure800PcbaState}
+                        ShowInput={true}
+                        Threshold={this.state.threshold_pressure_800_pcba}
+                        Value={this.state.test_pressure_800_pcba}
+                        ShowValue={true}
+                        handleInputChange={(text) => {
+                            this.handleInputChange("pressure_800_pcba", text);
+                        }}
+                        handleThresholdChange={() => {
+                            this.handleThresholdChange("pressure_800_pcba");
+                        }}
+                    />
                 }
                 {bleMac !== '' &&
                     <SecurityMainCard
@@ -284,7 +455,18 @@ class CapsulePcba extends React.Component {
                                 this.onPressState(this.state.bleMac, 'pressure_850_pcba', 0);
                             }
                         }}
-                        Toggle={this.state.pressure850PcbaState}/>
+                        Toggle={this.state.pressure850PcbaState}
+                        ShowInput={true}
+                        Threshold={this.state.threshold_pressure_850_pcba}
+                        Value={this.state.test_pressure_850_pcba}
+                        ShowValue={true}
+                        handleInputChange={(text) => {
+                            this.handleInputChange("pressure_850_pcba", text);
+                        }}
+                        handleThresholdChange={() => {
+                            this.handleThresholdChange("pressure_850_pcba");
+                        }}
+                    />
                 }
                 {bleMac !== '' &&
                     <SecurityMainCard
@@ -298,7 +480,18 @@ class CapsulePcba extends React.Component {
                                 this.onPressState(this.state.bleMac, 'thermometer_pcba', 0);
                             }
                         }}
-                        Toggle={this.state.thermometerPcbaState}/>
+                        Toggle={this.state.thermometerPcbaState}
+                        ShowInput={true}
+                        Threshold={this.state.threshold_thermometer_pcba}
+                        Value={this.state.test_thermometer_pcba}
+                        ShowValue={true}
+                        handleInputChange={(text) => {
+                            this.handleInputChange("thermometer_pcba", text);
+                        }}
+                        handleThresholdChange={() => {
+                            this.handleThresholdChange("thermometer_pcba");
+                        }}
+                    />
                 }
                 {bleMac !== '' &&
                     <SecurityMainCard

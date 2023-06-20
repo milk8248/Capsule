@@ -1,5 +1,5 @@
 import React from "react";
-import {Input, Space} from "antd";
+import {Button, Input, Space} from "antd";
 
 const getResultColor = (value) => {
     switch (value.toLowerCase()) {
@@ -28,29 +28,20 @@ class SecurityMainCard extends React.Component {
             Value,
             ShowValue,
             ShowInput,
-            width = "col-lg-4 col-md-4 col-md-12"
+            Threshold,
+            width = "col-lg-4 col-md-4 col-md-12",
+            handleInputChange,
+            handleThresholdChange
         } = this.props;
 
         return (
             <div className={width}>
-                <div className="card">
+                <div className="card card-test">
                     <div className="body">
-                        <div className="clearfix">
+                        <div className="flex flex-column gap-1">
                             <div className={"flex justify-content-between"}>
-                                <div>
-                                    <h6 className="mb-0">{Heading}</h6>
-                                    {
-                                        Toggle == 0 &&
-                                        <small className="text-danger">No Data</small>
-                                    }
-                                    {
-                                        Toggle == 1 &&
-                                        <small className="text-danger">測試中</small>
-                                    }
-                                    {
-                                        Toggle == 2 &&
-                                        <small className="text-success">測試完成</small>
-                                    }
+                                <div className="flex align-items-center">
+                                    <h5 className={"mb-0"}>{Heading}</h5>
                                 </div>
                                 <div>
                                     {Toggle == 0 &&
@@ -83,17 +74,32 @@ class SecurityMainCard extends React.Component {
                                 </div>
                             </div>
                             {
-                                (Toggle == 2 && ShowValue) &&
-                                <ResultTemplate value={Value} />
-                            }
-                            {
                                 (ShowInput) &&
                                 <div className={"mt-1"}>
-                                    <Space direction="vertical">
-                                        <Input addonBefore="測試門檻值" defaultValue="" />
+                                    <Space>
+                                        <Input addonBefore="測試門檻值" value={Threshold} onChange={handleInputChange} onPressEnter={handleThresholdChange}/>
+                                        <Button type="default" onClick={handleThresholdChange}>送出</Button>
                                     </Space>
                                 </div>
                             }
+                            <div className={"flex justify-content-between"}>
+                                {
+                                    Toggle == 0 &&
+                                    <div className="text-danger">No Data</div>
+                                }
+                                {
+                                    Toggle == 1 &&
+                                    <div className="text-danger">測試中</div>
+                                }
+                                {
+                                    Toggle == 2 &&
+                                    <div className="text-success">測試完成</div>
+                                }
+                                {
+                                    (Toggle == 2 && ShowValue) &&
+                                    <ResultTemplate value={Value} />
+                                }
+                            </div>
                         </div>
                     </div>
                 </div>

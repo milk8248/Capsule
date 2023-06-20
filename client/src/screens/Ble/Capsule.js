@@ -37,6 +37,8 @@ class Capsule extends React.Component {
     }
 
 
+
+
     render() {
 
         const {
@@ -47,12 +49,12 @@ class Capsule extends React.Component {
             {
                 key: '1',
                 label: 'PCBA',
-                children: (<CapsulePcba bleMac={bleMac}></CapsulePcba>),
+                children: (<CapsulePcba bleMac={bleMac} />),
             },
             {
                 key: '2',
                 label: '成品',
-                children: (<CapsuleFinish bleMac={bleMac}></CapsuleFinish>),
+                children: (<CapsuleFinish bleMac={bleMac} />),
             },
         ];
 

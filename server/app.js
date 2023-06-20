@@ -22,7 +22,6 @@ server.on('listening', onListening);
 
 app.use(logger('dev'));
 app.use(express.json());
-console.log(absolutePath.default());
 app.use('/',express.static(absolutePath.default()));
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());

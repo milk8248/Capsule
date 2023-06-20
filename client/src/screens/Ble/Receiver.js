@@ -18,6 +18,7 @@ import moment from "moment";
 import CapsulePcba from "./CapsulePcba";
 import CapsuleFinish from "./CapsuleFinish";
 import ReceiverPressureTable from "../../components/Tables/ReceiverPressureTable";
+import Form from "react-bootstrap/Form";
 
 class Receiver extends React.Component {
 
@@ -30,10 +31,11 @@ class Receiver extends React.Component {
             pressureState: 0,
             pressureStartTime: '',
             pressureEndTime: '',
-            bleReceiverData: []
+            bleReceiverData: [],
+            selectedFile: null
         };
 
-        setInterval( () => {
+        setInterval(() => {
             this.getReceiverInfo(bleMac);
             this.getBleReceiverData(bleMac);
             this.getRecevierPressureData(bleMac);
@@ -133,6 +135,29 @@ class Receiver extends React.Component {
             .catch(err => console.error(err));
     };
 
+    onFileChange = event => {
+
+        console.log(event.target.files[0])
+        this.setState({ selectedFile: event.target.files[0] });
+
+    };
+
+    onFileUpload = () => {
+        var formdata = new FormData();
+        formdata.append("file", this.state.selectedFile, this.state.selectedFile.name);
+        fetch('/api/upload_ble_receiver_csv', {
+            method: 'POST',
+            body: formdata
+        })
+            .then(response => response.json())
+            .then(response => {
+                if (response.code == 200) {
+                    alert('上傳成功!')
+                }
+            })
+            .catch(err => console.error(err));
+    };
+
 
     render() {
 
@@ -173,6 +198,25 @@ class Receiver extends React.Component {
                                     Toggle={this.state.pressureState}
                                 />
                             }
+
+                            <div className="col-lg-8">
+                                <div className="card">
+                                    <div className="body table-responsive">
+                                        <Form.Group controlId="formFile" className="mb-3">
+                                            <Form.Label>僅供上傳CSV檔案
+                                            </Form.Label>
+                                            <Form.Control type="file" onChange={this.onFileChange}/>
+                                        </Form.Group>
+                                        <button
+                                            className="btn btn-primary"
+                                            onClick={this.onFileUpload}
+                                        >
+                                            上傳
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
                         </div>
                         <div className="row">
                             {bleMac !== '' &&

@@ -85,9 +85,9 @@ class NavbarMenu extends React.Component {
                 <li className={activeKey === "receiver" ? "active" : ""}>
                   <Link to="/receiver"><i className="icon-list"></i> <span>接收器清單</span></Link>
                 </li>
-                <li className={activeKey === "uploadcapsulereceivercsv" ? "active" : ""}>
-                  <Link to="/uploadcapsulereceivercsv"><i className="icon-cloud-upload"></i> <span>上傳藍芽接收器CSV</span></Link>
-                </li>
+                {/*<li className={activeKey === "uploadcapsulereceivercsv" ? "active" : ""}>*/}
+                {/*  <Link to="/uploadcapsulereceivercsv"><i className="icon-cloud-upload"></i> <span>上傳藍芽接收器CSV</span></Link>*/}
+                {/*</li>*/}
               </ul>
             </Nav>
           </div>
