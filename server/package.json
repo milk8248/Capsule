@@ -16,7 +16,7 @@
     ]
   },
   "dependencies": {
-    "@milk8248/capsule-client-dist": "file:milk8248-capsule-client-dist-0.1.5.tgz",
+    "@milk8248/capsule-client-dist": "file:milk8248-capsule-client-dist-0.1.6.tgz",
     "connect": "^3.7.0",
     "cookie-parser": "~1.4.4",
     "debug": "~2.6.9",

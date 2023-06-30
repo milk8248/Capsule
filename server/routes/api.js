@@ -10,12 +10,8 @@ const db = require('../db_handler');
 var storage = multer.diskStorage({
     destination: (req, file, callBack) => {
         callBack(null, 'uploads')
-    },
-    filename: (req, file, callBack) => {
-        callBack(
-            null,
-            file.fieldname + '-' + Date.now() + path.extname(file.originalname),
-        )
+    }, filename: (req, file, callBack) => {
+        callBack(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname),)
     },
 })
 const upload = multer({
@@ -37,11 +33,7 @@ router.get('/', function (req, res, next) {
 });
 
 router.get('/capsule', function (req, res, next) {
-    db.db_query('SELECT csv.*, c.*, adv.value as airtightness_data\n' +
-        'FROM capsule.capsule_state_v csv,\n' +
-        '     capsule.capsule c\n' +
-        '         LEFT JOIN capsule.airtightness_data_v adv on adv.mac = c.mac\n' +
-        'WHERE csv.mac = c.mac')
+    db.db_query('SELECT csv.*, c.*, adv.value as airtightness_data\n' + 'FROM capsule.capsule_state_v csv,\n' + '     capsule.capsule c\n' + '         LEFT JOIN capsule.airtightness_data_v adv on adv.mac = c.mac\n' + 'WHERE csv.mac = c.mac')
         .then(data => {
             res.json(data)
         })
@@ -65,11 +57,8 @@ router.post('/threshold', function (req, res, next) {
     db.db_insert('INSERT INTO capsule.threshold (timestamp, type, value) VALUES ($1, $2, $3) ON CONFLICT (type) DO UPDATE SET value = $3, timestamp = $1', payload)
         .then(result => {
             res.json({
-                code: 200,
-                massage: 'update success',
-                response: [{
-                    type: payload[2],
-                    value: payload[3],
+                code: 200, massage: 'update success', response: [{
+                    type: payload[2], value: payload[3],
                 }]
             })
         })
@@ -83,12 +72,8 @@ router.put('/capsule/threshold', function (req, res, next) {
     db.db_update('UPDATE capsule.capsule SET threshold_' + req.body.type + ' = $1 where mac = $2', payload)
         .then(result => {
             res.json({
-                code: 200,
-                massage: 'update success',
-                response: [{
-                    mac: payload[1],
-                    type: req.body.type,
-                    value: payload[0],
+                code: 200, massage: 'update success', response: [{
+                    mac: payload[1], type: req.body.type, value: payload[0],
                 }]
             })
         })
@@ -126,43 +111,18 @@ router.post('/capsule', function (req, res, next) {
             db.db_query('Select * From capsule.capsule Where mac = $1', reqBodyData)
                 .then(data2 => {
                     if (data2.response.length == 0) {
-                        const payload = [
-                            moment().format(),
-                            req.body.mac.toLowerCase(),
-                            threshold_pressure_750,
-                            threshold_pressure_800,
-                            threshold_pressure_850,
-                            threshold_pressure_750_pcba,
-                            threshold_pressure_800_pcba,
-                            threshold_pressure_850_pcba,
-                            threshold_thermometer,
-                            threshold_thermometer_pcba
-                        ];
-                        db.db_insert('INSERT INTO capsule.capsule (' +
-                            'timestamp, mac, ' +
-                            'threshold_pressure_750, ' +
-                            'threshold_pressure_800, ' +
-                            'threshold_pressure_850, ' +
-                            'threshold_pressure_750_pcba, ' +
-                            'threshold_pressure_800_pcba, ' +
-                            'threshold_pressure_850_pcba, ' +
-                            'threshold_thermometer, ' +
-                            'threshold_thermometer_pcba ' +
-                            ') VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)', payload)
+                        const payload = [moment().format(), req.body.mac.toLowerCase(), threshold_pressure_750, threshold_pressure_800, threshold_pressure_850, threshold_pressure_750_pcba, threshold_pressure_800_pcba, threshold_pressure_850_pcba, threshold_thermometer, threshold_thermometer_pcba];
+                        db.db_insert('INSERT INTO capsule.capsule (' + 'timestamp, mac, ' + 'threshold_pressure_750, ' + 'threshold_pressure_800, ' + 'threshold_pressure_850, ' + 'threshold_pressure_750_pcba, ' + 'threshold_pressure_800_pcba, ' + 'threshold_pressure_850_pcba, ' + 'threshold_thermometer, ' + 'threshold_thermometer_pcba ' + ') VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)', payload)
                             .then(data3 => {
                                 res.json({
-                                    code: 200,
-                                    massage: '寫入成功',
-                                    response: [{
-                                        timestamp: payload[0],
-                                        mac: payload[1],
+                                    code: 200, massage: '寫入成功', response: [{
+                                        timestamp: payload[0], mac: payload[1],
                                     }]
                                 })
                             })
                     } else {
                         res.json({
-                            code: 500,
-                            massage: '此膠囊已註冊'
+                            code: 500, massage: '此膠囊已註冊'
                         })
                     }
                 })
@@ -174,26 +134,7 @@ router.post('/capsule', function (req, res, next) {
 
 router.get('/capsule/:mac', function (req, res, next) {
     const data = [req.params.mac];
-    db.db_query('Select csv.*,\n' +
-        '       c.threshold_pressure_750,\n' +
-        '       c.threshold_pressure_800,\n' +
-        '       c.threshold_pressure_850,\n' +
-        '       c.threshold_pressure_750_pcba,\n' +
-        '       c.threshold_pressure_800_pcba,\n' +
-        '       c.threshold_pressure_850_pcba,\n' +
-        '       c.threshold_thermometer,\n' +
-        '       c.threshold_thermometer_pcba,\n' +
-        '       c.test_pressure_750,\n' +
-        '       c.test_pressure_800,\n' +
-        '       c.test_pressure_850,\n' +
-        '       c.test_pressure_750_pcba,\n' +
-        '       c.test_pressure_800_pcba,\n' +
-        '       c.test_pressure_850_pcba,\n' +
-        '       c.test_thermometer,\n' +
-        '       c.test_thermometer_pcba\n' +
-        'From capsule.capsule_state_v csv\n' +
-        '         left join capsule.capsule c on csv.mac = c.mac\n' +
-        'where csv.mac = $1', data)
+    db.db_query('Select csv.*,\n' + '       c.threshold_pressure_750,\n' + '       c.threshold_pressure_800,\n' + '       c.threshold_pressure_850,\n' + '       c.threshold_pressure_750_pcba,\n' + '       c.threshold_pressure_800_pcba,\n' + '       c.threshold_pressure_850_pcba,\n' + '       c.threshold_thermometer,\n' + '       c.threshold_thermometer_pcba,\n' + '       c.test_pressure_750,\n' + '       c.test_pressure_800,\n' + '       c.test_pressure_850,\n' + '       c.test_pressure_750_pcba,\n' + '       c.test_pressure_800_pcba,\n' + '       c.test_pressure_850_pcba,\n' + '       c.test_thermometer,\n' + '       c.test_thermometer_pcba\n' + 'From capsule.capsule_state_v csv\n' + '         left join capsule.capsule c on csv.mac = c.mac\n' + 'where csv.mac = $1', data)
         .then(data => {
             res.json(data)
         })
@@ -224,18 +165,14 @@ router.post('/receiver', function (req, res, next) {
                 db.db_insert('INSERT INTO capsule.receiver (timestamp, mac) VALUES ($1, $2)', payload)
                     .then(data => {
                         res.json({
-                            code: 200,
-                            massage: '寫入成功',
-                            response: [{
-                                timestamp: payload[0],
-                                mac: payload[1],
+                            code: 200, massage: '寫入成功', response: [{
+                                timestamp: payload[0], mac: payload[1],
                             }]
                         })
                     })
             } else {
                 res.json({
-                    code: 500,
-                    massage: '此膠囊已註冊'
+                    code: 500, massage: '此膠囊已註冊'
                 })
             }
         })
@@ -451,12 +388,8 @@ router.put('/state/:type', (req, res) => {
             db.db_delete("DELETE FROM capsule.capsule_state WHERE mac = $1 and type = $2", [req.body.mac.toLowerCase(), req.params.type])
                 .then(result => {
                     res.json({
-                        code: 200,
-                        massage: 'update success',
-                        response: [{
-                            mac: payload[0],
-                            type: payload[2],
-                            state: payload[3],
+                        code: 200, massage: 'update success', response: [{
+                            mac: payload[0], type: payload[2], state: payload[3],
                         }]
                     })
                 })
@@ -465,16 +398,25 @@ router.put('/state/:type', (req, res) => {
                 });
             break;
         case '1':
+            //將其他狀態為1的膠囊改成2
             const data = [moment().format(), req.body.mac.toLowerCase(), req.params.type]
             db.db_update('UPDATE capsule.capsule_state SET state = 2, endtime = $1 WHERE state = 1 and type = $3 and mac != $2', data)
                 .then(result => {
                     res.json({
-                        code: 200,
-                        massage: 'update success',
-                        response: [{
-                            mac: payload[0],
-                            type: payload[2],
-                            state: payload[3],
+                        code: 200, massage: 'update success', response: [{
+                            mac: payload[0], type: payload[2], state: payload[3],
+                        }]
+                    })
+                })
+                .catch(error => {
+                    res.status(500).send(error)
+                });
+            //將此膠囊其他狀態改成2
+            db.db_update('UPDATE capsule.capsule_state SET state = 2, endtime = $1 WHERE state = 1 and mac = $2', [moment().format(), req.body.mac.toLowerCase()])
+                .then(result => {
+                    res.json({
+                        code: 200, massage: 'update success', response: [{
+                            mac: payload[0], state: payload[1],
                         }]
                     })
                 })
@@ -484,12 +426,8 @@ router.put('/state/:type', (req, res) => {
             db.db_insert('INSERT INTO capsule.capsule_state (timestamp, mac, type, state, starttime) VALUES ($1, $2, $3, $4, $1) ON CONFLICT (mac, type) DO UPDATE SET state = $4, starttime = $1', payload)
                 .then(result => {
                     res.json({
-                        code: 200,
-                        massage: 'update success',
-                        response: [{
-                            mac: payload[0],
-                            type: payload[2],
-                            state: payload[3],
+                        code: 200, massage: 'update success', response: [{
+                            mac: payload[0], type: payload[2], state: payload[3],
                         }]
                     })
                 })
@@ -501,12 +439,8 @@ router.put('/state/:type', (req, res) => {
             db.db_insert('INSERT INTO capsule.capsule_state (timestamp, mac, type, state, starttime, endtime) VALUES ($1, $2, $3, $4, $1, $1) ON CONFLICT (mac, type) DO UPDATE SET state = $4, endtime = $1', payload)
                 .then(result => {
                     res.json({
-                        code: 200,
-                        massage: 'update success',
-                        response: [{
-                            mac: payload[0],
-                            type: payload[2],
-                            state: payload[3],
+                        code: 200, massage: 'update success', response: [{
+                            mac: payload[0], type: payload[2], state: payload[3],
                         }]
                     })
                 })
@@ -516,9 +450,7 @@ router.put('/state/:type', (req, res) => {
             break;
         default:
             res.status(500).send({
-                code: 500,
-                massage: 'state error',
-                response: []
+                code: 500, massage: 'state error', response: []
             })
     }
 })
@@ -592,7 +524,7 @@ router.post('/thermometer', function (req, res, next) {
                                                 const sum = device_data.reduce((a, b) => a + b, 0)
                                                 device_avg = (sum / device_data.length) || 0
 
-                                                db.db_query('Select * From capsule.ble_data Where mac = $1 AND timestamp BETWEEN $2 AND $3 ORDER BY timestamp DESC', [data.response[0].mac, device_starttime, device_endtime])
+                                                db.db_query('Select * From capsule.ble_data Where mac = $1 AND timestamp <= $2  ORDER BY timestamp DESC', [data.response[0].mac, device_endtime])
                                                     .then(res_ble_data => {
                                                         if (res_ble_data.response.length >= 5) {
                                                             for (let i = 0; i < res_ble_data.response.length; i++) {
@@ -689,8 +621,7 @@ router.post('/thermometer', function (req, res, next) {
 
                 } else {
                     res.json({
-                        code: 500,
-                        massage: '目前沒有要量測溫度的膠囊'
+                        code: 500, massage: '目前沒有要量測溫度的膠囊'
                     })
                 }
             })
@@ -699,8 +630,7 @@ router.post('/thermometer', function (req, res, next) {
             });
     } else {
         res.json({
-            code: 500,
-            massage: '輸入格式錯誤'
+            code: 500, massage: '輸入格式錯誤'
         })
     }
 });
@@ -773,7 +703,7 @@ router.post('/thermometer_pcba', function (req, res, next) {
                                                 const sum = device_data.reduce((a, b) => a + b, 0)
                                                 device_avg = (sum / device_data.length) || 0
 
-                                                db.db_query('Select * From capsule.ble_data Where mac = $1 AND timestamp BETWEEN $2 AND $3 ORDER BY timestamp DESC', [data.response[0].mac, device_starttime, device_endtime])
+                                                db.db_query('Select * From capsule.ble_data Where mac = $1 AND timestamp < $2 ORDER BY timestamp DESC Limit 5', [data.response[0].mac, device_endtime])
                                                     .then(res_ble_data => {
                                                         if (res_ble_data.response.length >= 5) {
                                                             for (let i = 0; i < res_ble_data.response.length; i++) {
@@ -870,8 +800,7 @@ router.post('/thermometer_pcba', function (req, res, next) {
 
                 } else {
                     res.json({
-                        code: 500,
-                        massage: '目前沒有要量測溫度的膠囊'
+                        code: 500, massage: '目前沒有要量測溫度的膠囊'
                     })
                 }
             })
@@ -880,8 +809,7 @@ router.post('/thermometer_pcba', function (req, res, next) {
             });
     } else {
         res.json({
-            code: 500,
-            massage: '輸入格式錯誤'
+            code: 500, massage: '輸入格式錯誤'
         })
     }
 });
@@ -946,7 +874,7 @@ router.post('/pressure/:type', function (req, res, next) {
                                                 const sum = device_data.reduce((a, b) => a + b, 0)
                                                 device_avg = (sum / device_data.length) || 0
 
-                                                db.db_query('Select * From capsule.ble_data Where mac = $1 AND timestamp BETWEEN $2 AND $3 ORDER BY timestamp DESC', [data.response[0].mac, device_starttime, device_endtime])
+                                                db.db_query('Select * From capsule.ble_data Where mac = $1 AND timestamp < $2 ORDER BY timestamp DESC Limit 5', [data.response[0].mac, device_endtime])
                                                     .then(res_ble_data => {
                                                         if (res_ble_data.response.length >= 5) {
                                                             for (let i = 0; i < res_ble_data.response.length; i++) {
@@ -959,13 +887,13 @@ router.post('/pressure/:type', function (req, res, next) {
                                                             ble_avg = (sum / ble_data.length) || 0
 
                                                             console.log('threshold_pressure', threshold_pressure)
-                                                            console.log('thermometer_data', device_data)
-                                                            console.log('thermometer_avg', device_avg)
+                                                            console.log('device_data', device_data)
+                                                            console.log('device_avg', device_avg)
                                                             console.log('device_starttime', device_starttime)
                                                             console.log('device_endtime', device_endtime)
                                                             console.log('diff_time', device_endtime - device_starttime)
-                                                            console.log('ble_thermometer_data', ble_data)
-                                                            console.log('ble_thermometer_avg', ble_avg)
+                                                            console.log('ble_data', ble_data)
+                                                            console.log('ble_avg', ble_avg)
                                                             console.log('device_starttime', ble_starttime)
                                                             console.log('device_endtime', ble_endtime)
                                                             console.log('diff_time', ble_endtime - ble_starttime)
@@ -1034,8 +962,7 @@ router.post('/pressure/:type', function (req, res, next) {
 
                 } else {
                     res.json({
-                        code: 500,
-                        massage: '目前沒有要量測溫度的膠囊'
+                        code: 500, massage: '目前沒有要量測溫度的膠囊'
                     })
                 }
             })
@@ -1045,8 +972,7 @@ router.post('/pressure/:type', function (req, res, next) {
 
     } else {
         res.json({
-            code: 500,
-            massage: '輸入格式錯誤'
+            code: 500, massage: '輸入格式錯誤'
         })
     }
 });
@@ -1110,7 +1036,7 @@ router.post('/pressure_pcba/:type', function (req, res, next) {
                                                 const sum = device_data.reduce((a, b) => a + b, 0)
                                                 device_avg = (sum / device_data.length) || 0
 
-                                                db.db_query('Select * From capsule.ble_pcba_data Where mac = $1 AND timestamp BETWEEN $2 AND $3 ORDER BY timestamp DESC', [data.response[0].mac, device_starttime, device_endtime])
+                                                db.db_query('Select * From capsule.ble_pcba_data Where mac = $1 AND timestamp < $2 ORDER BY timestamp DESC Limit 5', [data.response[0].mac, device_endtime])
                                                     .then(res_ble_data => {
                                                         if (res_ble_data.response.length >= 5) {
                                                             for (let i = 0; i < res_ble_data.response.length; i++) {
@@ -1198,8 +1124,7 @@ router.post('/pressure_pcba/:type', function (req, res, next) {
 
                 } else {
                     res.json({
-                        code: 500,
-                        massage: '目前沒有要量測溫度的膠囊'
+                        code: 500, massage: '目前沒有要量測溫度的膠囊'
                     })
                 }
             })
@@ -1209,8 +1134,7 @@ router.post('/pressure_pcba/:type', function (req, res, next) {
 
     } else {
         res.json({
-            code: 500,
-            massage: '輸入格式錯誤'
+            code: 500, massage: '輸入格式錯誤'
         })
     }
 });
@@ -1224,20 +1148,14 @@ router.post('/airtightness', function (req, res, next) {
                 db.db_insert('INSERT INTO capsule.airtightness_data (timestamp, mac, value, raw) VALUES ($1, $2, $3, $4)', payload)
                     .then(data => {
                         res.json({
-                            code: 200,
-                            massage: '寫入成功',
-                            response: [{
-                                timestamp: payload[0],
-                                mac: payload[1],
-                                value: payload[2],
-                                raw: payload[3]
+                            code: 200, massage: '寫入成功', response: [{
+                                timestamp: payload[0], mac: payload[1], value: payload[2], raw: payload[3]
                             }]
                         })
                     })
             } else {
                 res.json({
-                    code: 500,
-                    massage: '目前沒有要量測氣密的膠囊'
+                    code: 500, massage: '目前沒有要量測氣密的膠囊'
                 })
             }
         })
@@ -1257,9 +1175,7 @@ router.post('/rf', function (req, res, next) {
                     db.db_insert('INSERT INTO capsule.rf_data (timestamp, mac, value1, value2, result, threshold, raw) VALUES ($1, $2, $3, $4, $5, $6, $7)', payload)
                         .then(data => {
                             res.json({
-                                code: 200,
-                                massage: '寫入成功',
-                                response: [{
+                                code: 200, massage: '寫入成功', response: [{
                                     timestamp: payload[0],
                                     mac: payload[1],
                                     value1: payload[2],
@@ -1272,8 +1188,7 @@ router.post('/rf', function (req, res, next) {
                         })
                 } else {
                     res.json({
-                        code: 500,
-                        massage: '目前沒有要量測RF的膠囊'
+                        code: 500, massage: '目前沒有要量測RF的膠囊'
                     })
                 }
             })
@@ -1282,8 +1197,7 @@ router.post('/rf', function (req, res, next) {
             });
     } else {
         res.json({
-            code: 500,
-            massage: '輸入格式錯誤'
+            code: 500, massage: '輸入格式錯誤'
         })
     }
 });
@@ -1298,9 +1212,7 @@ router.post('/rf_pcba', function (req, res, next) {
                     db.db_insert('INSERT INTO capsule.rf_pcba_data (timestamp, mac, value1, value2, result, threshold, raw) VALUES ($1, $2, $3, $4, $5, $6, $7)', payload)
                         .then(data => {
                             res.json({
-                                code: 200,
-                                massage: '寫入成功',
-                                response: [{
+                                code: 200, massage: '寫入成功', response: [{
                                     timestamp: payload[0],
                                     mac: payload[1],
                                     value1: payload[2],
@@ -1313,8 +1225,7 @@ router.post('/rf_pcba', function (req, res, next) {
                         })
                 } else {
                     res.json({
-                        code: 500,
-                        massage: '目前沒有要量測RF的PCBA'
+                        code: 500, massage: '目前沒有要量測RF的PCBA'
                     })
                 }
             })
@@ -1323,8 +1234,7 @@ router.post('/rf_pcba', function (req, res, next) {
             });
     } else {
         res.json({
-            code: 500,
-            massage: '輸入格式錯誤'
+            code: 500, massage: '輸入格式錯誤'
         })
     }
 });
@@ -1339,20 +1249,14 @@ router.post('/receiver_pressure', function (req, res, next) {
                     db.db_insert('INSERT INTO capsule.receiver_pressure_data (timestamp, mac, value, raw) VALUES ($1, $2, $3, $4)', payload)
                         .then(data => {
                             res.json({
-                                code: 200,
-                                massage: '寫入成功',
-                                response: [{
-                                    timestamp: payload[0],
-                                    mac: payload[1],
-                                    value: payload[2],
-                                    raw: payload[3]
+                                code: 200, massage: '寫入成功', response: [{
+                                    timestamp: payload[0], mac: payload[1], value: payload[2], raw: payload[3]
                                 }]
                             })
                         })
                 } else {
                     res.json({
-                        code: 500,
-                        massage: '目前沒有要量測壓力的膠囊'
+                        code: 500, massage: '目前沒有要量測壓力的膠囊'
                     })
                 }
             })
@@ -1361,8 +1265,7 @@ router.post('/receiver_pressure', function (req, res, next) {
             });
     } else {
         res.json({
-            code: 500,
-            massage: '輸入格式錯誤'
+            code: 500, massage: '輸入格式錯誤'
         })
     }
 });
@@ -1407,36 +1310,37 @@ router.put('/receiver/pressure', (req, res) => {
 router.post('/ble_data', function (req, res, next) {
     if (isNumeric(req.body.pressure) && isNumeric(req.body.temperature)) {
         const payload = [moment().format(), req.body.mac.toLowerCase(), req.body.rssi, req.body.pressure, req.body.temperature, req.body.voltage, req.body.raw];
-        db.db_query('SELECT * FROM capsule.capsule_state WHERE mac = $1 and state = 1', [req.body.mac.toLowerCase()])
+        db.db_query('SELECT * FROM capsule.capsule_state WHERE mac = $1 and state = 1 ORDER BY timestamp DESC Limit 1', [req.body.mac.toLowerCase()])
             .then(res_cs => {
-                let table = ''
-                for (let i = 0; i < res_cs.response.length; i++) {
-                    if (res_cs.response[i].type.indexOf('pcba')) {
+                if(res_cs.response.length>0) {
+                    let table = ''
+                    if (res_cs.response[0].type.indexOf('pcba')>=0) {
                         table = '_pcba'
                     }
-                }
-                db.db_insert('INSERT INTO capsule.ble' + table + '_data (timestamp, mac, rssi, pressure, temperature, voltage, raw) VALUES ($1, $2, $3, $4, $5, $6, $7)', payload)
-                    .then(data => {
-                        res.json({
-                            code: 200,
-                            massage: '寫入成功',
-                            response: [{
-                                isPcba: table!=='',
-                                timestamp: payload[0],
-                                mac: payload[1],
-                                rssi: payload[2],
-                                pressure: payload[3],
-                                temperature: payload[4],
-                                voltage: payload[5],
-                                raw: payload[6]
-                            }]
+                    db.db_insert('INSERT INTO capsule.ble' + table + '_data (timestamp, mac, rssi, pressure, temperature, voltage, raw) VALUES ($1, $2, $3, $4, $5, $6, $7)', payload)
+                        .then(data => {
+                            res.json({
+                                code: 200, massage: '寫入成功', response: [{
+                                    isPcba: table !== '',
+                                    timestamp: payload[0],
+                                    mac: payload[1],
+                                    rssi: payload[2],
+                                    pressure: payload[3],
+                                    temperature: payload[4],
+                                    voltage: payload[5],
+                                    raw: payload[6]
+                                }]
+                            })
                         })
+                }else{
+                    res.json({
+                        code: 500, massage: '沒有要寫入的藍芽裝置'
                     })
+                }
             })
     } else {
         res.json({
-            code: 500,
-            massage: '輸入格式錯誤'
+            code: 500, massage: '輸入格式錯誤'
         })
     }
 });
@@ -1444,18 +1348,14 @@ router.post('/ble_data', function (req, res, next) {
 router.post('/upload_ble_csv', upload.single('file'), (req, res) => {
     csvToDb(__dirname + '/../uploads/' + req.file.filename)
     res.json({
-        code: 200,
-        msg: 'File successfully inserted!',
-        file: req.file,
+        code: 200, msg: 'File successfully inserted!', file: req.file,
     })
 })
 
 router.post('/upload_ble_receiver_csv', upload.single('file'), (req, res) => {
     receiverCsvToDb(__dirname + '/../uploads/' + req.file.filename)
     res.json({
-        code: 200,
-        msg: 'File successfully inserted!',
-        file: req.file,
+        code: 200, msg: 'File successfully inserted!', file: req.file,
     })
 })
 
@@ -1466,7 +1366,7 @@ router.post('/result/pressure', function (req, res, next) {
     let ble_pressure_data = {}
 
     const payload = [req.body.mac, req.body.type];
-    db.db_query('Select * From capsule.pressure_data Where mac=$1 and type=$2 order by timestamp desc limit 5', payload)
+    db.db_query('Select * From capsule.pressure_data Where mac=$1 and type=$2 order by timestamp desc Limit 5', payload)
         .then(data => {
             if (data.response.length == 5) {
                 let lastTimestamp = data.response[0].timestamp;
@@ -1474,8 +1374,7 @@ router.post('/result/pressure', function (req, res, next) {
                 let duration = moment(lastTimestamp) - moment(firstTimestamp)
                 if (duration >= 60000) {
                     res.json({
-                        code: 500,
-                        massage: '資料量超過一分鐘'
+                        code: 500, massage: '資料量超過一分鐘'
                     })
                 } else {
                     const average = arr => arr.reduce((p, c) => p + c, 0) / arr.length;
@@ -1486,29 +1385,145 @@ router.post('/result/pressure', function (req, res, next) {
                     const value_avg = average(value_array);
                     console.log(value_array)
                     pressure_data = {
-                        timestamp: moment(firstTimestamp) + duration / 2,
-                        value: value_avg
+                        timestamp: moment(firstTimestamp) + duration / 2, value: value_avg
                     }
                     res.json({
-                        code: 200,
-                        massage: pressure_data
+                        code: 200, massage: pressure_data
                     })
                 }
                 console.log(moment(lastTimestamp) - moment(firstTimestamp));
                 res.json({
-                    code: 200,
-                    massage: '資料量11不足'
+                    code: 200, massage: '資料量11不足'
                 })
             } else {
                 res.json({
-                    code: 500,
-                    massage: '資料量不足'
+                    code: 500, massage: '資料量不足'
                 })
             }
         })
         .catch(error => {
             res.status(500).send(error);
         });
+});
+
+router.get('/check/pressure/:type', function (req, res, next) {
+    let end_time = moment(req.query.end_time).format()
+    let mac = req.query.mac
+    let threshold = req.query.threshold
+
+    let device_data = []
+    let device_avg = 0
+    let device_starttime, device_endtime
+    let ble_data = []
+    let ble_avg = 0
+    let ble_starttime, ble_endtime
+    db.db_query('Select * From capsule.pressure_data Where mac = $1 AND type = $2 AND timestamp <= $3  ORDER BY timestamp DESC Limit 5', [mac, req.params.type, end_time])
+        .then(res_pressure_data => {
+            for (let i = 0; i < res_pressure_data.response.length; i++) {
+                device_data.push(res_pressure_data.response[i].value)
+            }
+            if (res_pressure_data.response.length >= 5) {
+                device_endtime = res_pressure_data.response[0].timestamp
+                device_starttime = res_pressure_data.response[res_pressure_data.response.length - 1].timestamp
+                if ((device_endtime - device_starttime) > 60 * 1000) {
+                    res.json({
+                        code: 200,
+                        massage: 'DATA時間超過1分鐘無法比對',
+                        response: [{
+                            mac: mac,
+                            end_time: end_time,
+                            device_starttime: device_starttime,
+                            device_endtime: device_endtime,
+                            device_data: res_pressure_data.response
+                        }]
+                    })
+                }
+            } else {
+                res.json({
+                    code: 200, massage: 'DATA筆數不足無法比對', response: [{
+                        mac: mac,
+                        end_time: end_time,
+                        device_data: res_pressure_data.response
+                    }]
+                })
+            }
+            const sum = device_data.reduce((a, b) => a + b, 0)
+            device_avg = (sum / device_data.length) || 0
+
+            db.db_query('Select * From capsule.ble_data Where mac = $1 AND timestamp <= $2 ORDER BY timestamp DESC Limit 5', [mac, device_endtime])
+                .then(res_ble_data => {
+                    if (res_ble_data.response.length >= 5) {
+                        for (let i = 0; i < res_ble_data.response.length; i++) {
+                            ble_data.push(res_ble_data.response[i].pressure)
+                        }
+                        ble_endtime = res_ble_data.response[0].timestamp
+                        ble_starttime = res_ble_data.response[res_ble_data.response.length - 1].timestamp
+
+                        const sum = ble_data.reduce((a, b) => a + b, 0)
+                        ble_avg = (sum / ble_data.length) || 0
+
+                        // console.log('threshold_pressure', threshold_pressure)
+                        // console.log('device_data', device_data)
+                        // console.log('device_avg', device_avg)
+                        // console.log('device_starttime', device_starttime)
+                        // console.log('device_endtime', device_endtime)
+                        // console.log('diff_time', device_endtime - device_starttime)
+                        // console.log('ble_data', ble_data)
+                        // console.log('ble_avg', ble_avg)
+                        // console.log('device_starttime', ble_starttime)
+                        // console.log('device_endtime', ble_endtime)
+                        // console.log('diff_time', ble_endtime - ble_starttime)
+
+                        if ((ble_endtime - ble_starttime) > 60 * 1000) {
+                            res.json({
+                                code: 200,
+                                massage: 'BLE時間超過1分鐘無法比對',
+                                response: [{
+                                    mac: mac,
+                                    end_time: end_time,
+                                    device_starttime: device_starttime,
+                                    device_endtime: device_endtime,
+                                    ble_starttime: ble_starttime,
+                                    ble_endtime: ble_endtime,
+                                    ble_data: res_ble_data.response
+                                }]
+                            })
+                        }
+
+                        const pass_result = Math.abs(ble_avg - device_avg) < threshold
+
+                        res.json({
+                            code: 200, massage: '比對成功', response: [{
+                                mac: mac,
+                                end_time: end_time,
+                                device_starttime: device_starttime,
+                                device_endtime: device_endtime,
+                                threshold: threshold,
+                                device_data: res_pressure_data.response,
+                                device_avg: device_avg,
+                                ble_data: res_ble_data.response,
+                                ble_avg: ble_avg,
+                                pass: pass_result
+                            }]
+                        })
+
+                    } else {
+                        res.json({
+                            code: 200, massage: 'BLE筆數不足無法比對', response: [{
+                                mac: mac,
+                                end_time: end_time,
+                                device_starttime: device_starttime,
+                                device_endtime: device_endtime,
+                                device_data: res_pressure_data.response,
+                                ble_data: res_ble_data.response,
+                            }]
+                        })
+                    }
+                })
+
+
+        })
+
 });
 
 function csvToDb(csvUrl) {

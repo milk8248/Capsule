@@ -74,7 +74,7 @@ class SecurityMainCard extends React.Component {
                                 </div>
                             </div>
                             {
-                                (ShowInput) &&
+                                (ShowInput && Toggle == 0) &&
                                 <div className={"mt-1"}>
                                     <Space>
                                         <Input addonBefore="測試門檻值" value={Threshold} onChange={handleInputChange} onPressEnter={handleThresholdChange}/>
@@ -89,11 +89,11 @@ class SecurityMainCard extends React.Component {
                                 }
                                 {
                                     Toggle == 1 &&
-                                    <div className="text-danger">測試中</div>
+                                    <div className="text-danger">測試中 - 門檻值：{Threshold}</div>
                                 }
                                 {
                                     Toggle == 2 &&
-                                    <div className="text-success">測試完成</div>
+                                    <div className="text-success">測試完成 - 門檻值：{Threshold}</div>
                                 }
                                 {
                                     (Toggle == 2 && ShowValue) &&
