@@ -16,24 +16,9 @@ class RfTable extends React.Component {
                 key: 'timestamp',
             },
             {
-                title: 'Pass/Fail',
-                dataIndex: 'result',
-                key: 'result',
-            },
-            {
-                title: '閾值',
-                dataIndex: 'threshold',
-                key: 'threshold',
-            },
-            {
-                title: 'V1',
+                title: 'Value',
                 dataIndex: 'value1',
                 key: 'value1',
-            },
-            {
-                title: 'V2',
-                dataIndex: 'value2',
-                key: 'value2',
             },
         ];
 

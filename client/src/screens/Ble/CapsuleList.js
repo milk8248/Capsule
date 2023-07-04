@@ -19,6 +19,8 @@ class CapsuleList extends React.Component {
             threshold_pressure_850_pcba: 0,
             threshold_thermometer: 0,
             threshold_thermometer_pcba: 0,
+            threshold_rf: 0,
+            threshold_rf_pcba: 0,
         }
         this.getThreshold();
     }
@@ -83,6 +85,8 @@ class CapsuleList extends React.Component {
                         threshold_pressure_850_pcba: response.response[0].pressure_850_pcba,
                         threshold_thermometer: response.response[0].thermometer,
                         threshold_thermometer_pcba: response.response[0].thermometer_pcba,
+                        threshold_rf: response.response[0].rf,
+                        threshold_rf_pcba: response.response[0].rf_pcba,
                     })
                 }
             })
@@ -131,6 +135,16 @@ class CapsuleList extends React.Component {
                     threshold_thermometer_pcba: e.target.value,
                 })
                 break
+            case "rf":
+                this.setState({
+                    threshold_rf: e.target.value,
+                })
+                break
+            case "rf_pcba":
+                this.setState({
+                    threshold_rf_pcba: e.target.value,
+                })
+                break
             default:
                 break
         }
@@ -161,6 +175,12 @@ class CapsuleList extends React.Component {
                 break
             case "thermometer_pcba":
                 this.postThreshold(type, this.state.threshold_thermometer_pcba)
+                break
+            case "rf":
+                this.postThreshold(type, this.state.threshold_rf)
+                break
+            case "rf_pcba":
+                this.postThreshold(type, this.state.threshold_rf_pcba)
                 break
             default:
                 break
@@ -227,13 +247,15 @@ class CapsuleList extends React.Component {
                                 {name: "膠囊清單", navigate: ""},
                             ]}
                         />
-                        <div className="row clearfix">
+                        <div className="row">
                             <SearchBLECard handleMacChange={(text) => {
                                 this.handleMacChange(text);
                             }}/>
+                        </div>
+                        <div className="row row-cols-5">
                             <SettingCard
                                 Heading="PCBA溫度門檻值"
-                                width="col-md-3"
+                                width="col"
                                 data={this.state.threshold_thermometer_pcba}
                                 handleInputChange={(text) => {
                                     this.handleInputChange("thermometer_pcba", text);
@@ -244,7 +266,7 @@ class CapsuleList extends React.Component {
                             />
                             <SettingCard
                                 Heading="PCBA氣壓750門檻值"
-                                width="col-md-3"
+                                width="col"
                                 data={this.state.threshold_pressure_750_pcba}
                                 handleInputChange={(text) => {
                                     this.handleInputChange("pressure_750_pcba", text);
@@ -255,7 +277,7 @@ class CapsuleList extends React.Component {
                             />
                             <SettingCard
                                 Heading="PCBA氣壓800門檻值"
-                                width="col-md-3"
+                                width="col"
                                 data={this.state.threshold_pressure_800_pcba}
                                 handleInputChange={(text) => {
                                     this.handleInputChange("pressure_800_pcba", text);
@@ -266,7 +288,7 @@ class CapsuleList extends React.Component {
                             />
                             <SettingCard
                                 Heading="PCBA氣壓850門檻值"
-                                width="col-md-3"
+                                width="col"
                                 data={this.state.threshold_pressure_850_pcba}
                                 handleInputChange={(text) => {
                                     this.handleInputChange("pressure_850_pcba", text);
@@ -276,8 +298,21 @@ class CapsuleList extends React.Component {
                                 }}
                             />
                             <SettingCard
+                                Heading="PCBA RF"
+                                width="col"
+                                data={this.state.threshold_rf_pcba}
+                                handleInputChange={(text) => {
+                                    this.handleInputChange("rf_pcba", text);
+                                }}
+                                handleThresholdChange={() => {
+                                    this.handleThresholdChange("rf_pcba");
+                                }}
+                            />
+                        </div>
+                        <div className="row row-cols-5">
+                            <SettingCard
                                 Heading="成品溫度門檻值"
-                                width="col-md-3"
+                                width="col"
                                 data={this.state.threshold_thermometer}
                                 handleInputChange={(text) => {
                                     this.handleInputChange("thermometer", text);
@@ -288,7 +323,7 @@ class CapsuleList extends React.Component {
                             />
                             <SettingCard
                                 Heading="成品氣壓750門檻值"
-                                width="col-md-3"
+                                width="col"
                                 data={this.state.threshold_pressure_750}
                                 handleInputChange={(text) => {
                                     this.handleInputChange("pressure_750", text);
@@ -299,7 +334,7 @@ class CapsuleList extends React.Component {
                             />
                             <SettingCard
                                 Heading="成品氣壓800門檻值"
-                                width="col-md-3"
+                                width="col"
                                 data={this.state.threshold_pressure_800}
                                 handleInputChange={(text) => {
                                     this.handleInputChange("pressure_800", text);
@@ -310,7 +345,7 @@ class CapsuleList extends React.Component {
                             />
                             <SettingCard
                                 Heading="成品氣壓850門檻值"
-                                width="col-md-3"
+                                width="col"
                                 data={this.state.threshold_pressure_850}
                                 handleInputChange={(text) => {
                                     this.handleInputChange("pressure_850", text);
@@ -319,6 +354,19 @@ class CapsuleList extends React.Component {
                                     this.handleThresholdChange("pressure_850");
                                 }}
                             />
+                            <SettingCard
+                                Heading="RF"
+                                width="col"
+                                data={this.state.threshold_rf}
+                                handleInputChange={(text) => {
+                                    this.handleInputChange("rf", text);
+                                }}
+                                handleThresholdChange={() => {
+                                    this.handleThresholdChange("rf");
+                                }}
+                            />
+                        </div>
+                        <div className="row">
                             <BleListTable
                                 bleData={this.state.bleData}/>
                         </div>

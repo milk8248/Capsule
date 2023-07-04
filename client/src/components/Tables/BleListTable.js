@@ -76,11 +76,6 @@ export default function BleListTable(props) {
         );
     };
 
-    const thermometerPcbaStateBodyTemplate = (rowData) => {
-        return (<span
-            className={'badge badge-' + getSeverity(rowData.thermometer_pcba)}>{getState(rowData.thermometer_pcba)}</span>);
-    };
-
     const stateBodyTemplate = (rowData, type) => {
         const test_res = (rowData['test_' + type]) ? 'Pass' : 'fail'
         return (
@@ -105,8 +100,7 @@ export default function BleListTable(props) {
         return (stateBodyTemplate(rowData, 'pressure_850_pcba'))
     };
     const rfPcbaStateBodyTemplate = (rowData) => {
-        return (<span
-            className={'badge badge-' + getSeverity(rowData.rf_pcba)}>{getState(rowData.rf_pcba)}</span>);
+        return (stateBodyTemplate(rowData, 'rf_pcba'))
     };
     const pressure750StateBodyTemplate = (rowData) => {
         return (stateBodyTemplate(rowData, 'pressure_750'))
@@ -119,6 +113,10 @@ export default function BleListTable(props) {
     };
     const thermometerStateBodyTemplate = (rowData) => {
         return (stateBodyTemplate(rowData, 'thermometer'))
+    };
+
+    const thermometerPcbaStateBodyTemplate = (rowData) => {
+        return (stateBodyTemplate(rowData, 'thermometer_pcba'))
     };
 
     const airtightnessStateBodyTemplate = (rowData) => {
@@ -135,8 +133,7 @@ export default function BleListTable(props) {
     };
 
     const rfStateBodyTemplate = (rowData) => {
-        return (<span
-            className={'badge badge-' + getSeverity(rowData.rf)}>{getState(rowData.rf)}</span>);
+        return (stateBodyTemplate(rowData, 'rf'))
     };
 
     const getState = (status) => {

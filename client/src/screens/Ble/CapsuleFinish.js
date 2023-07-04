@@ -44,6 +44,8 @@ class Capsule extends React.Component {
             threshold_pressure_850_pcba: 0,
             threshold_thermometer: 0,
             threshold_thermometer_pcba: 0,
+            threshold_rf: 0,
+            threshold_rf_pcba: 0,
             test_pressure_750: false,
             test_pressure_800: false,
             test_pressure_850: false,
@@ -51,7 +53,9 @@ class Capsule extends React.Component {
             test_pressure_800_pcba: false,
             test_pressure_850_pcba: false,
             test_thermometer: false,
-            test_thermometer_pcba: false
+            test_thermometer_pcba: false,
+            test_rf: false,
+            test_rf_pcba: false
         };
 
         this.getCapsuleThreshold(bleMac);
@@ -192,6 +196,8 @@ class Capsule extends React.Component {
                         test_pressure_850_pcba: ((response.response[0].test_pressure_850_pcba) ? "pass" : "fail"),
                         test_thermometer: ((response.response[0].test_thermometer) ? "pass" : "fail"),
                         test_thermometer_pcba: ((response.response[0].test_thermometer_pcba) ? "pass" : "fail"),
+                        test_rf: ((response.response[0].test_rf) ? "pass" : "fail"),
+                        test_rf_pcba: ((response.response[0].test_rf_pcba) ? "pass" : "fail"),
                     })
                 }
             })
@@ -214,7 +220,9 @@ class Capsule extends React.Component {
                         threshold_pressure_800_pcba: response.response[0].threshold_pressure_800_pcba,
                         threshold_pressure_850_pcba: response.response[0].threshold_pressure_850_pcba,
                         threshold_thermometer: response.response[0].threshold_thermometer,
-                        threshold_thermometer_pcba: response.response[0].threshold_thermometer_pcba
+                        threshold_thermometer_pcba: response.response[0].threshold_thermometer_pcba,
+                        threshold_rf: response.response[0].threshold_rf,
+                        threshold_rf_pcba: response.response[0].threshold_rf_pcba
                     })
                 }
             })
@@ -344,6 +352,16 @@ class Capsule extends React.Component {
                     threshold_thermometer_pcba: e.target.value,
                 })
                 break
+            case "rf":
+                this.setState({
+                    threshold_rf: e.target.value,
+                })
+                break
+            case "rf_pcba":
+                this.setState({
+                    threshold_rf_pcba: e.target.value,
+                })
+                break
             default:
                 break
         }
@@ -374,6 +392,12 @@ class Capsule extends React.Component {
                 break
             case "thermometer_pcba":
                 this.putCapsuleThreshold(type, this.state.threshold_thermometer_pcba)
+                break
+            case "rf":
+                this.putCapsuleThreshold(type, this.state.threshold_rf)
+                break
+            case "rf_pcba":
+                this.putCapsuleThreshold(type, this.state.threshold_rf_pcba)
                 break
             default:
                 break
@@ -542,6 +566,16 @@ class Capsule extends React.Component {
                             }
                         }}
                         Toggle={this.state.rfState}
+                        ShowInput={true}
+                        Threshold={this.state.threshold_rf}
+                        Value={this.state.test_rf}
+                        ShowValue={true}
+                        handleInputChange={(text) => {
+                            this.handleInputChange("rf", text);
+                        }}
+                        handleThresholdChange={() => {
+                            this.handleThresholdChange("rf");
+                        }}
                     />
                 }
 
@@ -579,11 +613,12 @@ class Capsule extends React.Component {
                 }
                 {bleMac !== '' &&
                     <PressureTable
+                        width="col-md-4"
                         pressureData={pressureData}/>
                 }
                 {bleMac !== '' &&
                     <RfTable
-                        width="col-md-5"
+                        width="col-md-4"
                         rfData={rfData}/>
                 }
                 {bleMac !== '' &&

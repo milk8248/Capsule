@@ -95,6 +95,8 @@ router.post('/capsule', function (req, res, next) {
             let threshold_pressure_850_pcba = 0
             let threshold_thermometer = 0
             let threshold_thermometer_pcba = 0
+            let threshold_rf = 0
+            let threshold_rf_pcba = 0
 
             if (data.response.length > 0) {
                 threshold_pressure_750 = data.response[0].pressure_750
@@ -105,14 +107,16 @@ router.post('/capsule', function (req, res, next) {
                 threshold_pressure_850_pcba = data.response[0].pressure_850_pcba
                 threshold_thermometer = data.response[0].thermometer
                 threshold_thermometer_pcba = data.response[0].thermometer_pcba
+                threshold_rf = data.response[0].rf
+                threshold_rf_pcba = data.response[0].rf_pcba
             }
 
             const reqBodyData = [req.body.mac.toLowerCase()];
             db.db_query('Select * From capsule.capsule Where mac = $1', reqBodyData)
                 .then(data2 => {
                     if (data2.response.length == 0) {
-                        const payload = [moment().format(), req.body.mac.toLowerCase(), threshold_pressure_750, threshold_pressure_800, threshold_pressure_850, threshold_pressure_750_pcba, threshold_pressure_800_pcba, threshold_pressure_850_pcba, threshold_thermometer, threshold_thermometer_pcba];
-                        db.db_insert('INSERT INTO capsule.capsule (' + 'timestamp, mac, ' + 'threshold_pressure_750, ' + 'threshold_pressure_800, ' + 'threshold_pressure_850, ' + 'threshold_pressure_750_pcba, ' + 'threshold_pressure_800_pcba, ' + 'threshold_pressure_850_pcba, ' + 'threshold_thermometer, ' + 'threshold_thermometer_pcba ' + ') VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)', payload)
+                        const payload = [moment().format(), req.body.mac.toLowerCase(), threshold_pressure_750, threshold_pressure_800, threshold_pressure_850, threshold_pressure_750_pcba, threshold_pressure_800_pcba, threshold_pressure_850_pcba, threshold_thermometer, threshold_thermometer_pcba, threshold_rf, threshold_rf_pcba];
+                        db.db_insert('INSERT INTO capsule.capsule (' + 'timestamp, mac, ' + 'threshold_pressure_750, ' + 'threshold_pressure_800, ' + 'threshold_pressure_850, ' + 'threshold_pressure_750_pcba, ' + 'threshold_pressure_800_pcba, ' + 'threshold_pressure_850_pcba, ' + 'threshold_thermometer, ' + 'threshold_thermometer_pcba, '+ 'threshold_rf, ' + 'threshold_rf_pcba ' + ') VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)', payload)
                             .then(data3 => {
                                 res.json({
                                     code: 200, massage: '寫入成功', response: [{
@@ -134,7 +138,30 @@ router.post('/capsule', function (req, res, next) {
 
 router.get('/capsule/:mac', function (req, res, next) {
     const data = [req.params.mac];
-    db.db_query('Select csv.*,\n' + '       c.threshold_pressure_750,\n' + '       c.threshold_pressure_800,\n' + '       c.threshold_pressure_850,\n' + '       c.threshold_pressure_750_pcba,\n' + '       c.threshold_pressure_800_pcba,\n' + '       c.threshold_pressure_850_pcba,\n' + '       c.threshold_thermometer,\n' + '       c.threshold_thermometer_pcba,\n' + '       c.test_pressure_750,\n' + '       c.test_pressure_800,\n' + '       c.test_pressure_850,\n' + '       c.test_pressure_750_pcba,\n' + '       c.test_pressure_800_pcba,\n' + '       c.test_pressure_850_pcba,\n' + '       c.test_thermometer,\n' + '       c.test_thermometer_pcba\n' + 'From capsule.capsule_state_v csv\n' + '         left join capsule.capsule c on csv.mac = c.mac\n' + 'where csv.mac = $1', data)
+    db.db_query('Select csv.*,\n' +
+        '       c.threshold_pressure_750,\n' +
+        '       c.threshold_pressure_800,\n' +
+        '       c.threshold_pressure_850,\n' +
+        '       c.threshold_pressure_750_pcba,\n' +
+        '       c.threshold_pressure_800_pcba,\n' +
+        '       c.threshold_pressure_850_pcba,\n' +
+        '       c.threshold_thermometer,\n' +
+        '       c.threshold_thermometer_pcba,\n' +
+        '       c.threshold_rf,\n' +
+        '       c.threshold_rf_pcba,\n' +
+        '       c.test_pressure_750,\n' +
+        '       c.test_pressure_800,\n' +
+        '       c.test_pressure_850,\n' +
+        '       c.test_pressure_750_pcba,\n' +
+        '       c.test_pressure_800_pcba,\n' +
+        '       c.test_pressure_850_pcba,\n' +
+        '       c.test_thermometer,\n' +
+        '       c.test_thermometer_pcba,\n' +
+        '       c.test_rf,\n' +
+        '       c.test_rf_pcba\n' +
+        'From capsule.capsule_state_v csv\n' +
+        '         left join capsule.capsule c on csv.mac = c.mac\n' +
+        'where csv.mac = $1', data)
         .then(data => {
             res.json(data)
         })
@@ -1167,24 +1194,51 @@ router.post('/airtightness', function (req, res, next) {
 
 //新增RF儀器的數值
 router.post('/rf', function (req, res, next) {
-    if (isNumeric(req.body.value1) && isNumeric(req.body.value2) && isNumeric(req.body.threshold)) {
+    if (isNumeric(req.body.value1)) {
         db.db_query('Select * From capsule.capsule_state_v Where rf = 1')
             .then(data => {
                 if (data.response.length > 0) {
-                    const payload = [moment().format(), data.response[0].mac, req.body.value1, req.body.value2, req.body.result, req.body.threshold, req.body.raw];
-                    db.db_insert('INSERT INTO capsule.rf_data (timestamp, mac, value1, value2, result, threshold, raw) VALUES ($1, $2, $3, $4, $5, $6, $7)', payload)
-                        .then(data => {
-                            res.json({
-                                code: 200, massage: '寫入成功', response: [{
-                                    timestamp: payload[0],
-                                    mac: payload[1],
-                                    value1: payload[2],
-                                    value2: payload[3],
-                                    result: payload[4],
-                                    threshold: payload[5],
-                                    raw: payload[6]
-                                }]
-                            })
+                    const payload = [moment().format(), data.response[0].mac, req.body.value1, req.body.value2, req.body.raw];
+                    db.db_insert('INSERT INTO capsule.rf_data (timestamp, mac, value1, value2, raw) VALUES ($1, $2, $3, $4, $5)', payload)
+                        .then(data2 => {
+                            db.db_query('Select * From capsule.capsule Where mac = $1', [data.response[0].mac])
+                                .then(data3 => {
+                                    let threshold_rf = 0
+                                    if (data3.response.length > 0) {
+                                        threshold_rf = data3.response[0].threshold_rf
+                                        console.log(threshold_rf)
+                                        let pass_result = req.body.value1>threshold_rf
+                                        db.db_update('UPDATE capsule.capsule SET test_rf = $2 WHERE mac = $1', [data.response[0].mac, pass_result])
+                                            .then(up_res => {
+                                                res.json({
+                                                    code: 200,
+                                                    massage: '寫入成功,比對成功',
+                                                    response: [{
+                                                        timestamp: payload[0],
+                                                        mac: payload[1],
+                                                        value1: payload[2],
+                                                        value2: payload[3],
+                                                        raw: payload[4],
+                                                        threshold_rf: threshold_rf,
+                                                        pass: pass_result
+                                                    }]
+                                                })
+                                            })
+                                    }else{
+                                        res.json({
+                                            code: 200,
+                                            massage: '無此膠囊資料',
+                                            response: [{
+                                                timestamp: payload[0],
+                                                mac: payload[1],
+                                                value1: payload[2],
+                                                value2: payload[3],
+                                                raw: payload[4]
+                                            }]
+                                        })
+                                    }
+
+                                })
                         })
                 } else {
                     res.json({
@@ -1204,24 +1258,50 @@ router.post('/rf', function (req, res, next) {
 
 //新增RF儀器的數值
 router.post('/rf_pcba', function (req, res, next) {
-    if (isNumeric(req.body.value1) && isNumeric(req.body.value2) && isNumeric(req.body.threshold)) {
+    if (isNumeric(req.body.value1)) {
         db.db_query('Select * From capsule.capsule_state_v Where rf_pcba = 1')
             .then(data => {
                 if (data.response.length > 0) {
-                    const payload = [moment().format(), data.response[0].mac, req.body.value1, req.body.value2, req.body.result, req.body.threshold, req.body.raw];
-                    db.db_insert('INSERT INTO capsule.rf_pcba_data (timestamp, mac, value1, value2, result, threshold, raw) VALUES ($1, $2, $3, $4, $5, $6, $7)', payload)
-                        .then(data => {
-                            res.json({
-                                code: 200, massage: '寫入成功', response: [{
-                                    timestamp: payload[0],
-                                    mac: payload[1],
-                                    value1: payload[2],
-                                    value2: payload[3],
-                                    result: payload[4],
-                                    threshold: payload[5],
-                                    raw: payload[6]
-                                }]
-                            })
+                    const payload = [moment().format(), data.response[0].mac, req.body.value1, req.body.value2, req.body.raw];
+                    db.db_insert('INSERT INTO capsule.rf_pcba_data (timestamp, mac, value1, value2, raw) VALUES ($1, $2, $3, $4, $5)', payload)
+                        .then(data2 => {
+                            db.db_query('Select * From capsule.capsule Where mac = $1', [data.response[0].mac])
+                                .then(data3 => {
+                                    let threshold_rf_pcba = 0
+                                    if (data3.response.length > 0) {
+                                        threshold_rf_pcba = data3.response[0].threshold_rf_pcba
+                                        let pass_result = req.body.value1>threshold_rf_pcba
+                                        db.db_update('UPDATE capsule.capsule SET test_rf = $2 WHERE mac = $1', [data.response[0].mac, pass_result])
+                                            .then(up_res => {
+                                                res.json({
+                                                    code: 200,
+                                                    massage: '寫入成功,比對成功',
+                                                    response: [{
+                                                        timestamp: payload[0],
+                                                        mac: payload[1],
+                                                        value1: payload[2],
+                                                        value2: payload[3],
+                                                        raw: payload[4],
+                                                        threshold_rf_pcba: threshold_rf_pcba,
+                                                        pass: pass_result
+                                                    }]
+                                                })
+                                            })
+                                    }else{
+                                        res.json({
+                                            code: 200,
+                                            massage: '無此膠囊資料',
+                                            response: [{
+                                                timestamp: payload[0],
+                                                mac: payload[1],
+                                                value1: payload[2],
+                                                value2: payload[3],
+                                                raw: payload[4]
+                                            }]
+                                        })
+                                    }
+
+                                })
                         })
                 } else {
                     res.json({

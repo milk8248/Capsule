@@ -43,14 +43,16 @@ class CapsulePcba extends React.Component {
             rfPcbaEndTime: '',
             bleData: [],
             bleReceiverData: [],
-            threshold_pressure_750:0,
-            threshold_pressure_800:0,
-            threshold_pressure_850:0,
-            threshold_pressure_750_pcba:0,
-            threshold_pressure_800_pcba:0,
-            threshold_pressure_850_pcba:0,
-            threshold_thermometer:0,
-            threshold_thermometer_pcba:0,
+            threshold_pressure_750: 0,
+            threshold_pressure_800: 0,
+            threshold_pressure_850: 0,
+            threshold_pressure_750_pcba: 0,
+            threshold_pressure_800_pcba: 0,
+            threshold_pressure_850_pcba: 0,
+            threshold_thermometer: 0,
+            threshold_thermometer_pcba: 0,
+            threshold_rf: 0,
+            threshold_rf_pcba: 0,
             test_pressure_750: false,
             test_pressure_800: false,
             test_pressure_850: false,
@@ -58,12 +60,14 @@ class CapsulePcba extends React.Component {
             test_pressure_800_pcba: false,
             test_pressure_850_pcba: false,
             test_thermometer: false,
-            test_thermometer_pcba: false
+            test_thermometer_pcba: false,
+            test_rf: false,
+            test_rf_pcba: false
         };
 
         this.getCapsuleThreshold(bleMac);
 
-        setInterval( () => {
+        setInterval(() => {
             this.getBleData(bleMac);
             this.getCapsuleInfo(bleMac);
             this.getThermometerPcbaData(bleMac);
@@ -167,6 +171,8 @@ class CapsulePcba extends React.Component {
                         test_pressure_850_pcba: ((response.response[0].test_pressure_850_pcba) ? "pass" : "fail"),
                         test_thermometer: ((response.response[0].test_thermometer) ? "pass" : "fail"),
                         test_thermometer_pcba: ((response.response[0].test_thermometer_pcba) ? "pass" : "fail"),
+                        test_rf: ((response.response[0].test_thermometer) ? "pass" : "fail"),
+                        test_rf_pcba: ((response.response[0].test_thermometer_pcba) ? "pass" : "fail"),
                     })
                 }
             })
@@ -181,14 +187,16 @@ class CapsulePcba extends React.Component {
             .then(response => {
                 if (response.response.length > 0) {
                     this.setState({
-                        threshold_pressure_750:response.response[0].threshold_pressure_750,
-                        threshold_pressure_800:response.response[0].threshold_pressure_800,
-                        threshold_pressure_850:response.response[0].threshold_pressure_850,
-                        threshold_pressure_750_pcba:response.response[0].threshold_pressure_750_pcba,
-                        threshold_pressure_800_pcba:response.response[0].threshold_pressure_800_pcba,
-                        threshold_pressure_850_pcba:response.response[0].threshold_pressure_850_pcba,
-                        threshold_thermometer:response.response[0].threshold_thermometer,
-                        threshold_thermometer_pcba:response.response[0].threshold_thermometer_pcba
+                        threshold_pressure_750: response.response[0].threshold_pressure_750,
+                        threshold_pressure_800: response.response[0].threshold_pressure_800,
+                        threshold_pressure_850: response.response[0].threshold_pressure_850,
+                        threshold_pressure_750_pcba: response.response[0].threshold_pressure_750_pcba,
+                        threshold_pressure_800_pcba: response.response[0].threshold_pressure_800_pcba,
+                        threshold_pressure_850_pcba: response.response[0].threshold_pressure_850_pcba,
+                        threshold_thermometer: response.response[0].threshold_thermometer,
+                        threshold_thermometer_pcba: response.response[0].threshold_thermometer_pcba,
+                        threshold_rf: response.response[0].threshold_rf,
+                        threshold_rf_pcba: response.response[0].threshold_rf_pcba
                     })
                 }
             })
@@ -255,6 +263,16 @@ class CapsulePcba extends React.Component {
                     threshold_thermometer_pcba: e.target.value,
                 })
                 break
+            case "rf":
+                this.setState({
+                    threshold_rf: e.target.value,
+                })
+                break
+            case "rf_pcba":
+                this.setState({
+                    threshold_rf_pcba: e.target.value,
+                })
+                break
             default:
                 break
         }
@@ -289,7 +307,7 @@ class CapsulePcba extends React.Component {
             .then(response => response.json())
             .then(response => {
                 if (response.code == 200) {
-                    if(response.response.length>0) {
+                    if (response.response.length > 0) {
                         switch (response.response[0].type) {
                             case 'thermometer_pcba':
                                 this.setState({
@@ -348,6 +366,12 @@ class CapsulePcba extends React.Component {
                 break
             case "thermometer_pcba":
                 this.putCapsuleThreshold(type, this.state.threshold_thermometer_pcba)
+                break
+            case "rf":
+                this.putCapsuleThreshold(type, this.state.threshold_rf)
+                break
+            case "rf_pcba":
+                this.putCapsuleThreshold(type, this.state.threshold_rf_pcba)
                 break
             default:
                 break
@@ -505,7 +529,18 @@ class CapsulePcba extends React.Component {
                                 this.onPressState(this.state.bleMac, 'rf_pcba', 0);
                             }
                         }}
-                        Toggle={this.state.rfPcbaState}/>
+                        Toggle={this.state.rfPcbaState}
+                        ShowInput={true}
+                        Threshold={this.state.threshold_rf_pcba}
+                        Value={this.state.test_rf_pcba}
+                        ShowValue={true}
+                        handleInputChange={(text) => {
+                            this.handleInputChange("rf_pcba", text);
+                        }}
+                        handleThresholdChange={() => {
+                            this.handleThresholdChange("rf_pcba");
+                        }}
+                    />
                 }
 
 
@@ -518,17 +553,17 @@ class CapsulePcba extends React.Component {
                 }
                 {bleMac !== '' &&
                     <ThermometerTable
-                        width="col-md-6"
+                        width="col-md-4"
                         thermoData={thermoData}/>
                 }
                 {bleMac !== '' &&
                     <PressureTable
-                        width="col-md-6"
+                        width="col-md-4"
                         pressureData={pressureData}/>
                 }
                 {bleMac !== '' &&
                     <RfTable
-                        width="col-md-6"
+                        width="col-md-4"
                         rfData={rfData}/>
                 }
                 {bleMac !== '' &&
