@@ -171,8 +171,8 @@ class CapsulePcba extends React.Component {
                         test_pressure_850_pcba: ((response.response[0].test_pressure_850_pcba) ? "pass" : "fail"),
                         test_thermometer: ((response.response[0].test_thermometer) ? "pass" : "fail"),
                         test_thermometer_pcba: ((response.response[0].test_thermometer_pcba) ? "pass" : "fail"),
-                        test_rf: ((response.response[0].test_thermometer) ? "pass" : "fail"),
-                        test_rf_pcba: ((response.response[0].test_thermometer_pcba) ? "pass" : "fail"),
+                        test_rf: ((response.response[0].test_rf) ? "pass" : "fail"),
+                        test_rf_pcba: ((response.response[0].test_rf_pcba) ? "pass" : "fail"),
                     })
                 }
             })

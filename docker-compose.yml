@@ -9,7 +9,7 @@ services:
     depends_on:
       - db
     stdin_open: true
-    image: milk8248/capsule-web:0.1.7
+    image: milk8248/capsule-web:0.1.9
     environment:
       # postgres
       PGHOST: db
