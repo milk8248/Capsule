@@ -508,15 +508,15 @@ router.post('/thermometer', function (req, res, next) {
                                         console.log(threshold_thermometer)
 
 
-                                        db.db_query('Select * From capsule.thermometer_data Where mac = $1 ORDER BY timestamp DESC Limit 5', [data.response[0].mac])
+                                        db.db_query('Select * From capsule.thermometer_data Where mac = $1 ORDER BY timestamp DESC Limit 10', [data.response[0].mac])
                                             .then(res_thermometer_data => {
                                                 for (let i = 0; i < res_thermometer_data.response.length; i++) {
                                                     device_data.push((res_thermometer_data.response[i].value1 + res_thermometer_data.response[i].value2) / 2)
                                                 }
-                                                if (res_thermometer_data.response.length >= 5) {
+                                                if (res_thermometer_data.response.length >= 10) {
                                                     device_endtime = res_thermometer_data.response[0].timestamp
                                                     device_starttime = res_thermometer_data.response[res_thermometer_data.response.length - 1].timestamp
-                                                    if ((device_endtime - device_starttime) > 60 * 1000) {
+                                                    if ((device_endtime - device_starttime) > 90 * 1000) {
                                                         res.json({
                                                             code: 200,
                                                             massage: '寫入成功,DATA時間超過1分鐘無法比對',
@@ -553,7 +553,7 @@ router.post('/thermometer', function (req, res, next) {
 
                                                 db.db_query('Select * From capsule.ble_data Where mac = $1 AND timestamp <= $2  ORDER BY timestamp DESC', [data.response[0].mac, device_endtime])
                                                     .then(res_ble_data => {
-                                                        if (res_ble_data.response.length >= 5) {
+                                                        if (res_ble_data.response.length >= 10) {
                                                             for (let i = 0; i < res_ble_data.response.length; i++) {
                                                                 ble_data.push(res_ble_data.response[i].temperature)
                                                             }
@@ -575,7 +575,7 @@ router.post('/thermometer', function (req, res, next) {
                                                             // console.log('device_endtime', ble_endtime)
                                                             // console.log('diff_time', ble_endtime - ble_starttime)
 
-                                                            if ((ble_endtime - ble_starttime) > 60 * 1000) {
+                                                            if ((ble_endtime - ble_starttime) > 90 * 1000) {
                                                                 res.json({
                                                                     code: 200,
                                                                     massage: '寫入成功,BLE時間超過1分鐘無法比對',
@@ -687,15 +687,15 @@ router.post('/thermometer_pcba', function (req, res, next) {
                                         console.log(threshold_thermometer_pcba)
 
 
-                                        db.db_query('Select * From capsule.thermometer_pcba_data Where mac = $1 ORDER BY timestamp DESC Limit 5', [data.response[0].mac])
+                                        db.db_query('Select * From capsule.thermometer_pcba_data Where mac = $1 ORDER BY timestamp DESC Limit 10', [data.response[0].mac])
                                             .then(res_thermometer_pcba_data => {
                                                 for (let i = 0; i < res_thermometer_pcba_data.response.length; i++) {
                                                     device_data.push((res_thermometer_pcba_data.response[i].value3 + res_thermometer_pcba_data.response[i].value4) / 2)
                                                 }
-                                                if (res_thermometer_pcba_data.response.length >= 5) {
+                                                if (res_thermometer_pcba_data.response.length >= 10) {
                                                     device_endtime = res_thermometer_pcba_data.response[0].timestamp
                                                     device_starttime = res_thermometer_pcba_data.response[res_thermometer_pcba_data.response.length - 1].timestamp
-                                                    if ((device_endtime - device_starttime) > 60 * 1000) {
+                                                    if ((device_endtime - device_starttime) > 90 * 1000) {
                                                         res.json({
                                                             code: 200,
                                                             massage: '寫入成功,DATA時間超過1分鐘無法比對',
@@ -730,9 +730,9 @@ router.post('/thermometer_pcba', function (req, res, next) {
                                                 const sum = device_data.reduce((a, b) => a + b, 0)
                                                 device_avg = (sum / device_data.length) || 0
 
-                                                db.db_query('Select * From capsule.ble_data Where mac = $1 AND timestamp < $2 ORDER BY timestamp DESC Limit 5', [data.response[0].mac, device_endtime])
+                                                db.db_query('Select * From capsule.ble_data Where mac = $1 AND timestamp < $2 ORDER BY timestamp DESC Limit 10', [data.response[0].mac, device_endtime])
                                                     .then(res_ble_data => {
-                                                        if (res_ble_data.response.length >= 5) {
+                                                        if (res_ble_data.response.length >= 10) {
                                                             for (let i = 0; i < res_ble_data.response.length; i++) {
                                                                 ble_data.push(res_ble_data.response[i].temperature)
                                                             }
@@ -754,7 +754,7 @@ router.post('/thermometer_pcba', function (req, res, next) {
                                                             // console.log('device_endtime', ble_endtime)
                                                             // console.log('diff_time', ble_endtime - ble_starttime)
 
-                                                            if ((ble_endtime - ble_starttime) > 60 * 1000) {
+                                                            if ((ble_endtime - ble_starttime) > 90 * 1000) {
                                                                 res.json({
                                                                     code: 200,
                                                                     massage: '寫入成功,BLE時間超過1分鐘無法比對',
@@ -864,15 +864,15 @@ router.post('/pressure/:type', function (req, res, next) {
                                     if (data3.response.length > 0) {
                                         threshold_pressure = data3.response[0]['threshold_pressure_' + req.params.type]
 
-                                        db.db_query('Select * From capsule.pressure_data Where mac = $1 AND type = $2 ORDER BY timestamp DESC Limit 5', [data.response[0].mac, req.params.type])
+                                        db.db_query('Select * From capsule.pressure_data Where mac = $1 AND type = $2 ORDER BY timestamp DESC Limit 10', [data.response[0].mac, req.params.type])
                                             .then(res_pressure_data => {
                                                 for (let i = 0; i < res_pressure_data.response.length; i++) {
                                                     device_data.push(res_pressure_data.response[i].value)
                                                 }
-                                                if (res_pressure_data.response.length >= 5) {
+                                                if (res_pressure_data.response.length >= 10) {
                                                     device_endtime = res_pressure_data.response[0].timestamp
                                                     device_starttime = res_pressure_data.response[res_pressure_data.response.length - 1].timestamp
-                                                    if ((device_endtime - device_starttime) > 60 * 1000) {
+                                                    if ((device_endtime - device_starttime) > 90 * 1000) {
                                                         res.json({
                                                             code: 200,
                                                             massage: '寫入成功,DATA時間超過1分鐘無法比對',
@@ -901,9 +901,9 @@ router.post('/pressure/:type', function (req, res, next) {
                                                 const sum = device_data.reduce((a, b) => a + b, 0)
                                                 device_avg = (sum / device_data.length) || 0
 
-                                                db.db_query('Select * From capsule.ble_data Where mac = $1 AND timestamp < $2 ORDER BY timestamp DESC Limit 5', [data.response[0].mac, device_endtime])
+                                                db.db_query('Select * From capsule.ble_data Where mac = $1 AND timestamp < $2 ORDER BY timestamp DESC Limit 10', [data.response[0].mac, device_endtime])
                                                     .then(res_ble_data => {
-                                                        if (res_ble_data.response.length >= 5) {
+                                                        if (res_ble_data.response.length >= 10) {
                                                             for (let i = 0; i < res_ble_data.response.length; i++) {
                                                                 ble_data.push(res_ble_data.response[i].pressure)
                                                             }
@@ -925,7 +925,7 @@ router.post('/pressure/:type', function (req, res, next) {
                                                             console.log('device_endtime', ble_endtime)
                                                             console.log('diff_time', ble_endtime - ble_starttime)
 
-                                                            if ((ble_endtime - ble_starttime) > 60 * 1000) {
+                                                            if ((ble_endtime - ble_starttime) > 90 * 1000) {
                                                                 res.json({
                                                                     code: 200,
                                                                     massage: '寫入成功,BLE時間超過1分鐘無法比對',
@@ -1026,15 +1026,15 @@ router.post('/pressure_pcba/:type', function (req, res, next) {
                                     if (data3.response.length > 0) {
                                         threshold_pressure = data3.response[0]['threshold_pressure_' + req.params.type + '_pcba']
 
-                                        db.db_query('Select * From capsule.pressure_pcba_data Where mac = $1 AND type = $2 ORDER BY timestamp DESC Limit 5', [data.response[0].mac, req.params.type])
+                                        db.db_query('Select * From capsule.pressure_pcba_data Where mac = $1 AND type = $2 ORDER BY timestamp DESC Limit 10', [data.response[0].mac, req.params.type])
                                             .then(res_pressure_data => {
                                                 for (let i = 0; i < res_pressure_data.response.length; i++) {
                                                     device_data.push(res_pressure_data.response[i].value)
                                                 }
-                                                if (res_pressure_data.response.length >= 5) {
+                                                if (res_pressure_data.response.length >= 10) {
                                                     device_endtime = res_pressure_data.response[0].timestamp
                                                     device_starttime = res_pressure_data.response[res_pressure_data.response.length - 1].timestamp
-                                                    if ((device_endtime - device_starttime) > 60 * 1000) {
+                                                    if ((device_endtime - device_starttime) > 90 * 1000) {
                                                         res.json({
                                                             code: 200,
                                                             massage: '寫入成功,DATA時間超過1分鐘無法比對',
@@ -1063,9 +1063,9 @@ router.post('/pressure_pcba/:type', function (req, res, next) {
                                                 const sum = device_data.reduce((a, b) => a + b, 0)
                                                 device_avg = (sum / device_data.length) || 0
 
-                                                db.db_query('Select * From capsule.ble_pcba_data Where mac = $1 AND timestamp < $2 ORDER BY timestamp DESC Limit 5', [data.response[0].mac, device_endtime])
+                                                db.db_query('Select * From capsule.ble_pcba_data Where mac = $1 AND timestamp < $2 ORDER BY timestamp DESC Limit 10', [data.response[0].mac, device_endtime])
                                                     .then(res_ble_data => {
-                                                        if (res_ble_data.response.length >= 5) {
+                                                        if (res_ble_data.response.length >= 10) {
                                                             for (let i = 0; i < res_ble_data.response.length; i++) {
                                                                 ble_data.push(res_ble_data.response[i].pressure)
                                                             }
@@ -1087,7 +1087,7 @@ router.post('/pressure_pcba/:type', function (req, res, next) {
                                                             console.log('device_endtime', ble_endtime)
                                                             console.log('diff_time', ble_endtime - ble_starttime)
 
-                                                            if ((ble_endtime - ble_starttime) > 60 * 1000) {
+                                                            if ((ble_endtime - ble_starttime) > 90 * 1000) {
                                                                 res.json({
                                                                     code: 200,
                                                                     massage: '寫入成功,BLE時間超過1分鐘無法比對',
@@ -1428,9 +1428,9 @@ router.post('/ble_data', function (req, res, next) {
                                         db.db_query(`Select *
                                                      From capsule.ble${table}_data
                                                      Where mac = $1
-                                                     ORDER BY timestamp DESC Limit 5`, [mac])
+                                                     ORDER BY timestamp DESC Limit 10`, [mac])
                                             .then(res_ble_data => {
-                                                if (res_ble_data.response.length >= 5) {
+                                                if (res_ble_data.response.length >= 10) {
                                                     for (let i = 0; i < res_ble_data.response.length; i++) {
                                                         if (type.indexOf('pressure') >= 0) {
                                                             ble_data.push(res_ble_data.response[i].pressure)
@@ -1450,7 +1450,7 @@ router.post('/ble_data', function (req, res, next) {
                                                     console.log('ble_avg', ble_avg)
                                                     console.log('diff_ble_time', ble_endtime - ble_starttime)
 
-                                                    if ((ble_endtime - ble_starttime) > 60 * 1000) {
+                                                    if ((ble_endtime - ble_starttime) > 90 * 1000) {
                                                         res.json({
                                                             code: 200,
                                                             massage: '寫入成功,BLE時間超過1分鐘無法比對',
@@ -1475,18 +1475,18 @@ router.post('/ble_data', function (req, res, next) {
                                                                      Where mac = $1
                                                                        AND type = $2
                                                                        AND timestamp <= $3 
-                                                                     ORDER BY timestamp DESC Limit 5`, [mac, pressure_type, ble_endtime])
+                                                                     ORDER BY timestamp DESC Limit 10`, [mac, pressure_type, ble_endtime])
                                                             .then(res_pressure_data => {
                                                                 console.log(res_pressure_data)
                                                                 for (let i = 0; i < res_pressure_data.response.length; i++) {
                                                                     device_data.push(res_pressure_data.response[i].value)
                                                                 }
                                                                 console.log('device_data', device_data)
-                                                                if (res_pressure_data.response.length >= 5) {
+                                                                if (res_pressure_data.response.length >= 10) {
                                                                     device_endtime = res_pressure_data.response[0].timestamp
                                                                     device_starttime = res_pressure_data.response[res_pressure_data.response.length - 1].timestamp
                                                                     console.log('diff_divice_time', device_endtime - device_starttime)
-                                                                    if ((device_endtime - device_starttime) > 60 * 1000) {
+                                                                    if ((device_endtime - device_starttime) > 90 * 1000) {
                                                                         res.json({
                                                                             code: 200,
                                                                             massage: '寫入成功,DATA時間超過1分鐘無法比對',
@@ -1548,18 +1548,18 @@ router.post('/ble_data', function (req, res, next) {
                                                                      From capsule.thermometer${table}_data
                                                                      Where mac = $1
                                                                        AND timestamp <= $2
-                                                                     ORDER BY timestamp DESC Limit 5`, [mac, ble_endtime])
+                                                                     ORDER BY timestamp DESC Limit 10`, [mac, ble_endtime])
                                                             .then(res_thermometer_data => {
                                                                 console.log(res_thermometer_data)
                                                                 for (let i = 0; i < res_thermometer_data.response.length; i++) {
                                                                         device_data.push((res_thermometer_data.response[i].value1 + res_thermometer_data.response[i].value2) / 2)
                                                                 }
                                                                 console.log('device_data', device_data)
-                                                                if (res_thermometer_data.response.length >= 5) {
+                                                                if (res_thermometer_data.response.length >= 10) {
                                                                     device_endtime = res_thermometer_data.response[0].timestamp
                                                                     device_starttime = res_thermometer_data.response[res_thermometer_data.response.length - 1].timestamp
                                                                     console.log('diff_divice_time', device_endtime - device_starttime)
-                                                                    if ((device_endtime - device_starttime) > 60 * 1000) {
+                                                                    if ((device_endtime - device_starttime) > 90 * 1000) {
                                                                         res.json({
                                                                             code: 200,
                                                                             massage: '寫入成功,DATA時間超過1分鐘無法比對',
@@ -1669,13 +1669,13 @@ router.post('/result/pressure', function (req, res, next) {
     let ble_pressure_data = {}
 
     const payload = [req.body.mac, req.body.type];
-    db.db_query('Select * From capsule.pressure_data Where mac=$1 and type=$2 order by timestamp desc Limit 5', payload)
+    db.db_query('Select * From capsule.pressure_data Where mac=$1 and type=$2 order by timestamp desc Limit 10', payload)
         .then(data => {
-            if (data.response.length == 5) {
+            if (data.response.length == 10) {
                 let lastTimestamp = data.response[0].timestamp;
                 let firstTimestamp = data.response[4].timestamp;
                 let duration = moment(lastTimestamp) - moment(firstTimestamp)
-                if (duration >= 60000) {
+                if (duration >= 90000) {
                     res.json({
                         code: 500, massage: '資料量超過一分鐘'
                     })
@@ -1720,15 +1720,15 @@ router.get('/check/pressure/:type', function (req, res, next) {
     let ble_data = []
     let ble_avg = 0
     let ble_starttime, ble_endtime
-    db.db_query('Select * From capsule.pressure_data Where mac = $1 AND type = $2 AND timestamp <= $3  ORDER BY timestamp DESC Limit 5', [mac, req.params.type, end_time])
+    db.db_query('Select * From capsule.pressure_data Where mac = $1 AND type = $2 AND timestamp <= $3  ORDER BY timestamp DESC Limit 10', [mac, req.params.type, end_time])
         .then(res_pressure_data => {
             for (let i = 0; i < res_pressure_data.response.length; i++) {
                 device_data.push(res_pressure_data.response[i].value)
             }
-            if (res_pressure_data.response.length >= 5) {
+            if (res_pressure_data.response.length >= 10) {
                 device_endtime = res_pressure_data.response[0].timestamp
                 device_starttime = res_pressure_data.response[res_pressure_data.response.length - 1].timestamp
-                if ((device_endtime - device_starttime) > 60 * 1000) {
+                if ((device_endtime - device_starttime) > 90 * 1000) {
                     res.json({
                         code: 200,
                         massage: 'DATA時間超過1分鐘無法比對',
@@ -1753,9 +1753,9 @@ router.get('/check/pressure/:type', function (req, res, next) {
             const sum = device_data.reduce((a, b) => a + b, 0)
             device_avg = (sum / device_data.length) || 0
 
-            db.db_query('Select * From capsule.ble_data Where mac = $1 AND timestamp <= $2 ORDER BY timestamp DESC Limit 5', [mac, device_endtime])
+            db.db_query('Select * From capsule.ble_data Where mac = $1 AND timestamp <= $2 ORDER BY timestamp DESC Limit 10', [mac, device_endtime])
                 .then(res_ble_data => {
-                    if (res_ble_data.response.length >= 5) {
+                    if (res_ble_data.response.length >= 10) {
                         for (let i = 0; i < res_ble_data.response.length; i++) {
                             ble_data.push(res_ble_data.response[i].pressure)
                         }
@@ -1777,7 +1777,7 @@ router.get('/check/pressure/:type', function (req, res, next) {
                         // console.log('device_endtime', ble_endtime)
                         // console.log('diff_time', ble_endtime - ble_starttime)
 
-                        if ((ble_endtime - ble_starttime) > 60 * 1000) {
+                        if ((ble_endtime - ble_starttime) > 90 * 1000) {
                             res.json({
                                 code: 200,
                                 massage: 'BLE時間超過1分鐘無法比對',
