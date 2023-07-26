@@ -9,7 +9,9 @@ services:
     depends_on:
       - db
     stdin_open: true
-    image: milk8248/capsule-web:0.1.9
+    image: milk8248/capsule-web:0.1.10
+    volumes:
+      - ./upload:/snapshot/app/routes/upload
     environment:
       # postgres
       PGHOST: db

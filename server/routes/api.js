@@ -6,10 +6,17 @@ const moment = require('moment');
 const csv = require('fast-csv');
 const path = require('path');
 const db = require('../db_handler');
+const process = require('process');
+
+// const uploadFolderPath = path.join(__dirname, 'upload');
+const uploadFolderPath = path.join(process.cwd(), "./upload")
 
 var storage = multer.diskStorage({
     destination: (req, file, callBack) => {
-        callBack(null, 'uploads')
+        if (!fs.existsSync(uploadFolderPath)) {
+            fs.mkdirSync(uploadFolderPath, { recursive: true });
+        }
+        callBack(null, uploadFolderPath);
     }, filename: (req, file, callBack) => {
         callBack(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname),)
     },
@@ -24,6 +31,7 @@ function isNumeric(str) {
         !isNaN(parseFloat(str)) // ...and ensure strings of whitespace fail
 }
 
+console.log(uploadFolderPath)
 
 /* GET users listing. */
 router.get('/', function (req, res, next) {
@@ -1649,14 +1657,15 @@ router.post('/ble_data', function (req, res, next) {
 });
 
 router.post('/upload_ble_csv', upload.single('file'), (req, res) => {
-    csvToDb(__dirname + '/../uploads/' + req.file.filename)
+    csvToDb(uploadFolderPath+'/'+ req.file.filename)
+
     res.json({
         code: 200, msg: 'File successfully inserted!', file: req.file,
     })
 })
 
 router.post('/upload_ble_receiver_csv', upload.single('file'), (req, res) => {
-    receiverCsvToDb(__dirname + '/../uploads/' + req.file.filename)
+    receiverCsvToDb(uploadFolderPath +'/'+ req.file.filename)
     res.json({
         code: 200, msg: 'File successfully inserted!', file: req.file,
     })
