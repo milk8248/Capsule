@@ -10,6 +10,7 @@ import "primereact/resources/themes/lara-light-indigo/theme.css";
 import "primereact/resources/primereact.min.css";
 import 'primeicons/primeicons.css';
 import 'primeflex/primeflex.css';
+import moment from "moment/moment";
 
 
 export default function BleListTable(props) {
@@ -51,6 +52,7 @@ export default function BleListTable(props) {
     const renderHeader = () => {
         return (
             <div className="flex justify-content-between">
+                <div className="flex gap-2">
                 <Button
                     type="button"
                     icon="pi pi-filter-slash"
@@ -58,12 +60,20 @@ export default function BleListTable(props) {
                     outlined
                     onClick={clearFilter}
                 />
+                {/*<Button*/}
+                {/*    type="button"*/}
+                {/*    icon="pi pi-filter-slash"*/}
+                {/*    label="Export"*/}
+                {/*    outlined*/}
+                {/*    onClick={'export'}*/}
+                {/*/>*/}
+                </div>
                 <span className="p-input-icon-left">
           <i className="pi pi-search"/>
           <InputText
               value={globalFilterValue}
               onChange={onGlobalFilterChange}
-              placeholder="Mac Search"
+              placeholder="Time / Mac Search"
           />
         </span>
             </div>
@@ -76,13 +86,32 @@ export default function BleListTable(props) {
         );
     };
 
+    const timeBodyTemplate = (rowData) => {
+        const time = moment(rowData.timestamp).format('YYYY-MM-DD HH:mm:ss')
+        return (
+            time
+        );
+    };
+
     const stateBodyTemplate = (rowData, type) => {
-        const test_res = (rowData['test_' + type]) ? 'Pass' : 'fail'
+        let test_res = 'Pass'
+        switch (rowData['test_' + type]) {
+            case 0:
+                test_res = "Fail"
+                break
+            case 1:
+                test_res = "Pass"
+                break
+            case 2:
+                test_res = "資料不足"
+                break
+        }
+
         return (
             <div className={'flex flex-column'}>
                 <span
                     className={'badge badge-' + getSeverity(rowData[type])}>{getState(rowData[type])}</span>
-                {rowData[type] == '2' &&
+                {rowData[type] === 2 &&
                     <span
                         className={'badge badge-' + getResult(test_res)}>{test_res}</span>
                 }
@@ -124,7 +153,7 @@ export default function BleListTable(props) {
             <div className={'flex flex-column'}>
                 <span
                     className={'badge badge-' + getSeverity(rowData.airtightness)}>{getState(rowData.airtightness)}</span>
-                {rowData.airtightness == '2' &&
+                {rowData.airtightness === 2 &&
                     <span
                         className={'badge badge-' + getResult(rowData.airtightness_data)}>{rowData.airtightness_data}</span>
                 }
@@ -140,10 +169,8 @@ export default function BleListTable(props) {
         switch (status) {
             case 0:
                 return "未量測";
-
             case 1:
                 return "量測中";
-
             case 2:
                 return "已量測";
         }
@@ -153,10 +180,8 @@ export default function BleListTable(props) {
         switch (status) {
             case 0:
                 return null;
-
             case 1:
                 return "danger";
-
             case 2:
                 return "success";
         }
@@ -165,11 +190,14 @@ export default function BleListTable(props) {
     const getResult = (result) => {
         if (result != null) {
             result = result.toLowerCase()
+            console.log(result)
             switch (result) {
                 case "pass":
                     return "success";
-                default:
+                case "fail":
                     return "danger";
+                case "資料不足":
+                    return "warning";
             }
         }
     };
@@ -191,10 +219,11 @@ export default function BleListTable(props) {
                                dataKey="mac"
                                filters={filters}
                                globalFilterFields={[
-                                   "mac"
+                                   "mac","timestamp"
                                ]}
                                header={header}
                                emptyMessage="No data found.">
+                        <Column field="timestamp" header="Time" sortable body={timeBodyTemplate}></Column>
                         <Column field="mac" header="Mac" sortable body={macBodyTemplate}></Column>
                         <Column field="thermometer_pcba" header="PCBA溫度"
                                 body={thermometerPcbaStateBodyTemplate}></Column>

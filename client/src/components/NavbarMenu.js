@@ -72,6 +72,9 @@ class NavbarMenu extends React.Component {
                 膠囊試量產測試平台
               </a>
             </div>
+            <div className="navbar-right">
+              <div className="pull-right">v0.1.12</div>
+            </div>
           </div>
         </nav>
 
@@ -82,9 +85,18 @@ class NavbarMenu extends React.Component {
                 <li className={activeKey === "capsule" ? "active" : ""}>
                   <Link to="/capsule"><i className="icon-list"></i> <span>膠囊清單</span></Link>
                 </li>
-                <li className={activeKey === "receiver" ? "active" : ""}>
-                  <Link to="/receiver"><i className="icon-list"></i> <span>接收器清單</span></Link>
+                <li className={activeKey === "receiver_auto" ? "active" : ""}>
+                  <Link to="/receiver_auto"><i className="icon-list"></i> <span>接收器清單(自動上傳)</span></Link>
                 </li>
+                <li className={activeKey === "multi_thermometer" ? "active" : ""}>
+                  <Link to="/multi_thermometer"><i className="icon-list"></i> <span>6顆膠囊測試溫度</span></Link>
+                </li>
+                {/*<li className={activeKey === "multi_pressure" ? "active" : ""}>*/}
+                {/*  <Link to="/multi_pressure"><i className="icon-list"></i> <span>6顆膠囊測試壓力</span></Link>*/}
+                {/*</li>*/}
+                {/*<li className={activeKey === "receiver" ? "active" : ""}>*/}
+                {/*  <Link to="/receiver"><i className="icon-list"></i> <span>接收器清單</span></Link>*/}
+                {/*</li>*/}
                 {/*<li className={activeKey === "uploadcapsulereceivercsv" ? "active" : ""}>*/}
                 {/*  <Link to="/uploadcapsulereceivercsv"><i className="icon-cloud-upload"></i> <span>上傳藍芽接收器CSV</span></Link>*/}
                 {/*</li>*/}

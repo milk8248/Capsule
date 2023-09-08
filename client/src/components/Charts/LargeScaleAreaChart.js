@@ -13,16 +13,22 @@ class LargeScaleAreaChart extends React.Component {
             bleData=[] } = this.props;
 
         let dateTime = [];
+        let allData = [];
 
         if(thermoData.length>0) {
             thermoData.map(entry => {
                 dateTime.push(entry.timestamp)
+                if (typeof (entry.value1) === 'number') allData.push(entry.value1)
+                if (typeof (entry.value2) === 'number') allData.push(entry.value2)
+                if (typeof (entry.value3) === 'number') allData.push(entry.value3)
+                if (typeof (entry.value4) === 'number') allData.push(entry.value4)
             })
         }
 
         if(bleData.length>0) {
             bleData.map(entry => {
                 dateTime.push(entry.timestamp)
+                if (typeof (entry.temperature) === 'number') allData.push(entry.temperature)
             })
         }
 
@@ -86,6 +92,8 @@ class LargeScaleAreaChart extends React.Component {
             ],
             yAxis: {
                 type: "value",
+                min: (Math.min(...allData) * 0.9).toFixed(0),
+                max: (Math.max(...allData) * 1.1).toFixed(0)
             },
             series: [
                 {

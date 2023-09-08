@@ -19,11 +19,21 @@ class BlePcbaTable extends React.Component {
                 title: '溫度',
                 dataIndex: 'temperature',
                 key: 'temperature',
+                render: (_, {temperature}) => (
+                    <>
+                        {temperature} °C
+                    </>
+                ),
             },
             {
                 title: '壓力',
                 dataIndex: 'pressure',
                 key: 'pressure',
+                render: (_, {pressure}) => (
+                    <>
+                        {pressure} mmHg
+                    </>
+                ),
             }
         ];
 

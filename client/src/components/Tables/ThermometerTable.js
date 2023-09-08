@@ -19,21 +19,41 @@ class ThermometerTable extends React.Component {
                 title: 'T1',
                 dataIndex: 'value1',
                 key: 'value1',
+                render: (_, {value1}) => (
+                    <>
+                        {value1} °C
+                    </>
+                ),
             },
             {
                 title: 'T2',
                 dataIndex: 'value2',
                 key: 'value2',
+                render: (_, {value2}) => (
+                    <>
+                        {value2} °C
+                    </>
+                ),
             },
             {
                 title: 'T3',
                 dataIndex: 'value3',
                 key: 'value3',
+                render: (_, {value3}) => (
+                    <>
+                        {value3} °C
+                    </>
+                ),
             },
             {
                 title: 'T4',
                 dataIndex: 'value4',
                 key: 'value4',
+                render: (_, {value4}) => (
+                    <>
+                        {value4} °C
+                    </>
+                ),
             },
         ];
 

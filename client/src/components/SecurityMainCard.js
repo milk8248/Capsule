@@ -3,10 +3,12 @@ import {Button, Input, Space} from "antd";
 
 const getResultColor = (value) => {
     switch (value.toLowerCase()) {
-        case 'pass':
+        case "pass":
             return "success";
-        default:
+        case "fail":
             return "danger";
+        case "資料不足":
+            return "warning";
     }
 };
 const ResultTemplate = (props) => {
@@ -76,7 +78,7 @@ class SecurityMainCard extends React.Component {
                             {
                                 (ShowInput && Toggle == 0) &&
                                 <div className={"mt-1"}>
-                                    <Space>
+                                    <Space style={{ width: '100%' }}>
                                         <Input addonBefore="測試門檻值" value={Threshold} onChange={handleInputChange} onPressEnter={handleThresholdChange}/>
                                         <Button type="default" onClick={handleThresholdChange}>送出</Button>
                                     </Space>

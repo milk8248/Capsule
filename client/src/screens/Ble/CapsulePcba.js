@@ -53,16 +53,16 @@ class CapsulePcba extends React.Component {
             threshold_thermometer_pcba: 0,
             threshold_rf: 0,
             threshold_rf_pcba: 0,
-            test_pressure_750: false,
-            test_pressure_800: false,
-            test_pressure_850: false,
-            test_pressure_750_pcba: false,
-            test_pressure_800_pcba: false,
-            test_pressure_850_pcba: false,
-            test_thermometer: false,
-            test_thermometer_pcba: false,
-            test_rf: false,
-            test_rf_pcba: false
+            test_pressure_750: 0,
+            test_pressure_800: 0,
+            test_pressure_850: 0,
+            test_pressure_750_pcba: 0,
+            test_pressure_800_pcba: 0,
+            test_pressure_850_pcba: 0,
+            test_thermometer: 0,
+            test_thermometer_pcba: 0,
+            test_rf: 0,
+            test_rf_pcba: 0
         };
 
         this.getCapsuleThreshold(bleMac);
@@ -163,16 +163,16 @@ class CapsulePcba extends React.Component {
                         pressure800PcbaState: response.response[0].pressure_800_pcba,
                         pressure850PcbaState: response.response[0].pressure_850_pcba,
                         thermometerPcbaState: response.response[0].thermometer_pcba,
-                        test_pressure_750: ((response.response[0].test_pressure_750) ? "pass" : "fail"),
-                        test_pressure_800: ((response.response[0].test_pressure_800) ? "pass" : "fail"),
-                        test_pressure_850: ((response.response[0].test_pressure_850) ? "pass" : "fail"),
-                        test_pressure_750_pcba: ((response.response[0].test_pressure_750_pcba) ? "pass" : "fail"),
-                        test_pressure_800_pcba: ((response.response[0].test_pressure_800_pcba) ? "pass" : "fail"),
-                        test_pressure_850_pcba: ((response.response[0].test_pressure_850_pcba) ? "pass" : "fail"),
-                        test_thermometer: ((response.response[0].test_thermometer) ? "pass" : "fail"),
-                        test_thermometer_pcba: ((response.response[0].test_thermometer_pcba) ? "pass" : "fail"),
-                        test_rf: ((response.response[0].test_rf) ? "pass" : "fail"),
-                        test_rf_pcba: ((response.response[0].test_rf_pcba) ? "pass" : "fail"),
+                        test_pressure_750: ((response.response[0].test_pressure_750 == 0) ? "fail" : ((response.response[0].test_pressure_750 == 1) ? "pass" : "資料不足")),
+                        test_pressure_800: ((response.response[0].test_pressure_800 == 0) ? "fail" : ((response.response[0].test_pressure_800 == 1) ? "pass" : "資料不足")),
+                        test_pressure_850: ((response.response[0].test_pressure_850 == 0) ? "fail" : ((response.response[0].test_pressure_850 == 1) ? "pass" : "資料不足")),
+                        test_pressure_750_pcba: ((response.response[0].test_pressure_750_pcba == 0) ? "fail" : ((response.response[0].test_pressure_750_pcba == 1) ? "pass" : "資料不足")),
+                        test_pressure_800_pcba: ((response.response[0].test_pressure_800_pcba == 0) ? "fail" : ((response.response[0].test_pressure_800_pcba == 1) ? "pass" : "資料不足")),
+                        test_pressure_850_pcba: ((response.response[0].test_pressure_850_pcba == 0) ? "fail" : ((response.response[0].test_pressure_850_pcba == 1) ? "pass" : "資料不足")),
+                        test_thermometer: ((response.response[0].test_thermometer == 0) ? "fail" : ((response.response[0].test_thermometer == 1) ? "pass" : "資料不足")),
+                        test_thermometer_pcba: ((response.response[0].test_thermometer_pcba == 0) ? "fail" : ((response.response[0].test_thermometer_pcba == 1) ? "pass" : "資料不足")),
+                        test_rf: ((response.response[0].test_rf == 0) ? "fail" : ((response.response[0].test_rf == 1) ? "pass" : "資料不足")),
+                        test_rf_pcba: ((response.response[0].test_rf_pcba == 0) ? "fail" : ((response.response[0].test_rf_pcba == 1) ? "pass" : "資料不足")),
                     })
                 }
             })

@@ -24,6 +24,11 @@ class PressureTable extends React.Component {
                 title: '壓力',
                 dataIndex: 'value',
                 key: 'pressure',
+                render: (_, {value}) => (
+                    <>
+                        {value} mmHg
+                    </>
+                ),
             },
         ];
 

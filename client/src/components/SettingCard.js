@@ -21,7 +21,7 @@ export default function settingCard(props) {
                             </div>
                         </div>
                         <div className={"mt-1"}>
-                            <Space.Compact>
+                            <Space.Compact style={{ width: '100%' }}>
                                 <Input value={data} onChange={handleInputChange} onPressEnter={handleThresholdChange}/>
                                 <Button type="default" onClick={handleThresholdChange}>送出</Button>
                             </Space.Compact>

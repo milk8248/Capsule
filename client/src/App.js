@@ -55,8 +55,11 @@ import tablenormal from "./screens/Tables/TableNormal";
 import exam from "./screens/Charts/Exam";
 import capsulelist from "./screens/Ble/CapsuleList";
 import receiverlist from "./screens/Ble/ReceiverList";
+import receiverAutolist from "./screens/Ble/ReceiverAutoList";
 import receiver from "./screens/Ble/Receiver";
 import capsule from "./screens/Ble/Capsule";
+import receiverAuto from "./screens/Ble/ReceiverAuto";
+import multiThermometer from "./screens/Ble/MultiThermometer";
 import uploadcapsuleble from "./screens/Ble/UploadCapsuleBle";
 import uploadcapsulereceivercsv from "./screens/Ble/UploadCapsuleReceiverCsv";
 
@@ -137,6 +140,21 @@ class App extends React.Component {
                     exact
                     path={`${process.env.PUBLIC_URL}/receiver`}
                     component={receiverlist}
+                />
+                <Route
+                    exact
+                    path={`${process.env.PUBLIC_URL}/receiver_auto`}
+                    component={receiverAutolist}
+                />
+                <Route
+                    exact
+                    path={`${process.env.PUBLIC_URL}/receiver_auto/:bleMac`}
+                    component={receiverAuto}
+                />
+                <Route
+                    exact
+                    path={`${process.env.PUBLIC_URL}/multi_thermometer`}
+                    component={multiThermometer}
                 />
                 <Route
                     exact
