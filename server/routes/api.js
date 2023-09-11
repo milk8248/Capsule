@@ -866,163 +866,180 @@ router.post('/thermometer_pcba', function (req, res, next) {
 });
 
 //新增壓力儀器的數值
-router.post('/pressure/:type', function (req, res, next) {
+router.post('/pressure/:type', async function (req, res, next) {
     if (isNumeric(req.body.value)) {
         db.db_query('Select * From capsule.capsule_state_v Where pressure_' + req.params.type + ' = 1')
-            .then(data => {
+            .then(async data => {
+                const mac_list = []
+                const api_res = []
                 if (data.response.length > 0) {
-                    // db.db_insert('INSERT INTO capsule.ble_data (timestamp, mac, pressure) VALUES ($1, $2, $3)', [moment().format(), data.response[0].mac, 27.4])
-                    const payload = [moment().format(), data.response[0].mac, req.body.value, req.body.raw, req.params.type];
-                    db.db_insert('INSERT INTO capsule.pressure_data (timestamp, mac, value, raw, type) VALUES ($1, $2, $3, $4, $5)', payload)
-                        .then(data2 => {
-                            db.db_query('Select * From capsule.capsule Where mac = $1', [data.response[0].mac])
-                                .then(data3 => {
-                                    let threshold_pressure = 0
-                                    let device_data = []
-                                    let device_avg = 0
-                                    let device_starttime, device_endtime
-                                    let ble_data = []
-                                    let ble_avg = 0
-                                    let ble_starttime, ble_endtime
-                                    let pass_result = 0
+                    for (const cap of data.response) {
+                        const this_mac = cap.mac
+                        mac_list.push(this_mac)
+                        await db.db_insert('INSERT INTO capsule.ble_data (timestamp, mac, pressure) VALUES ($1, $2, $3)', [moment().format(), this_mac, 750.2])
+                        const payload = [moment().format(), this_mac, req.body.value, req.body.raw, req.params.type];
+                        await db.db_insert('INSERT INTO capsule.pressure_data (timestamp, mac, value, raw, type) VALUES ($1, $2, $3, $4, $5)', payload)
+                            .then(async data2 => {
+                                await db.db_query('Select * From capsule.capsule Where mac = $1', [this_mac])
+                                    .then(async data3 => {
+                                        let threshold_pressure = 0
+                                        let device_data = []
+                                        let device_avg = 0
+                                        let device_starttime, device_endtime
+                                        let ble_data = []
+                                        let ble_avg = 0
+                                        let ble_starttime, ble_endtime
+                                        let pass_result = 0
 
-                                    if (data3.response.length > 0) {
-                                        threshold_pressure = data3.response[0]['threshold_pressure_' + req.params.type]
+                                        if (data3.response.length > 0) {
+                                            threshold_pressure = data3.response[0]['threshold_pressure_' + req.params.type]
 
-                                        db.db_query('Select * From capsule.pressure_data Where mac = $1 AND type = $2 ORDER BY timestamp DESC Limit 10', [data.response[0].mac, req.params.type])
-                                            .then(res_pressure_data => {
-                                                for (let i = 0; i < res_pressure_data.response.length; i++) {
-                                                    device_data.push(res_pressure_data.response[i].value)
-                                                }
-                                                if (res_pressure_data.response.length >= 10) {
-                                                    device_endtime = res_pressure_data.response[0].timestamp
-                                                    device_starttime = res_pressure_data.response[res_pressure_data.response.length - 1].timestamp
-                                                    if ((device_endtime - device_starttime) > 90 * 1000) {
-                                                        db.db_update('UPDATE capsule.capsule SET test_pressure_' + req.params.type + ' = $2 WHERE mac = $1', [data.response[0].mac, 2])
-                                                        res.json({
-                                                            code: 200,
-                                                            massage: '寫入成功,DATA時間超過1分鐘無法比對',
-                                                            response: [{
-                                                                timestamp: payload[0],
-                                                                mac: payload[1],
-                                                                value: payload[2],
-                                                                raw: payload[3],
-                                                                device_starttime: device_starttime,
-                                                                device_endtime: device_endtime
-                                                            }]
-                                                        })
+                                            await db.db_query('Select * From capsule.pressure_data Where mac = $1 AND type = $2 ORDER BY timestamp DESC Limit 10', [this_mac, req.params.type])
+                                                .then(async res_pressure_data => {
+                                                    for (let i = 0; i < res_pressure_data.response.length; i++) {
+                                                        device_data.push(res_pressure_data.response[i].value)
                                                     }
-                                                } else {
-                                                    db.db_update('UPDATE capsule.capsule SET test_pressure_' + req.params.type + ' = $2 WHERE mac = $1', [data.response[0].mac, 2])
-                                                    res.json({
-                                                        code: 200,
-                                                        massage: '寫入成功,DATA筆數不足無法比對',
-                                                        response: [{
-                                                            timestamp: payload[0],
-                                                            mac: payload[1],
-                                                            value: payload[2],
-                                                            raw: payload[3]
-                                                        }]
-                                                    })
-                                                }
-                                                const sum = device_data.reduce((a, b) => a + b, 0)
-                                                device_avg = (sum / device_data.length) || 0
-
-                                                db.db_query('Select * From capsule.ble_data Where mac = $1 AND timestamp < $2 ORDER BY timestamp DESC Limit 10', [data.response[0].mac, device_endtime])
-                                                    .then(res_ble_data => {
-                                                        if (res_ble_data.response.length >= 10) {
-                                                            for (let i = 0; i < res_ble_data.response.length; i++) {
-                                                                ble_data.push(res_ble_data.response[i].pressure)
-                                                            }
-                                                            ble_endtime = res_ble_data.response[0].timestamp
-                                                            ble_starttime = res_ble_data.response[res_ble_data.response.length - 1].timestamp
-
-                                                            const sum = ble_data.reduce((a, b) => a + b, 0)
-                                                            ble_avg = (sum / ble_data.length) || 0
-
-                                                            console.log('threshold_pressure', threshold_pressure)
-                                                            console.log('device_data', device_data)
-                                                            console.log('device_avg', device_avg)
-                                                            console.log('device_starttime', device_starttime)
-                                                            console.log('device_endtime', device_endtime)
-                                                            console.log('diff_time', device_endtime - device_starttime)
-                                                            console.log('ble_data', ble_data)
-                                                            console.log('ble_avg', ble_avg)
-                                                            console.log('device_starttime', ble_starttime)
-                                                            console.log('device_endtime', ble_endtime)
-                                                            console.log('diff_time', ble_endtime - ble_starttime)
-
-                                                            if ((ble_endtime - ble_starttime) > 90 * 1000) {
-                                                                db.db_update('UPDATE capsule.capsule SET test_pressure_' + req.params.type + ' = $2 WHERE mac = $1', [data.response[0].mac, 2])
-                                                                res.json({
-                                                                    code: 200,
-                                                                    massage: '寫入成功,BLE時間超過1分鐘無法比對',
-                                                                    response: [{
-                                                                        timestamp: payload[0],
-                                                                        mac: payload[1],
-                                                                        value: payload[2],
-                                                                        raw: payload[3],
-                                                                        ble_starttime: ble_starttime,
-                                                                        ble_endtime: ble_endtime,
-                                                                        ble_data: res_ble_data.response
-                                                                    }]
-                                                                })
-                                                            }
-
-                                                            if (Math.abs(ble_avg - device_avg) < threshold_pressure) {
-                                                                pass_result = 1
-                                                            } else {
-                                                                pass_result = 0
-                                                            }
-
-                                                            db.db_update('UPDATE capsule.capsule SET test_pressure_' + req.params.type + ' = $2 WHERE mac = $1', [data.response[0].mac, pass_result])
-                                                                .then(up_res => {
-                                                                    res.json({
-                                                                        code: 200,
-                                                                        massage: '寫入成功,比對成功',
-                                                                        response: [{
-                                                                            timestamp: payload[0],
-                                                                            mac: payload[1],
-                                                                            value: payload[2],
-                                                                            raw: payload[3],
-                                                                            threshold_pressure: threshold_pressure,
-                                                                            device_data: res_pressure_data.response,
-                                                                            device_avg: device_avg,
-                                                                            ble_data: res_ble_data.response,
-                                                                            ble_avg: ble_avg,
-                                                                            pass: pass_result
-                                                                        }]
-                                                                    })
-                                                                })
-
-                                                        } else {
-                                                            db.db_update('UPDATE capsule.capsule SET test_pressure_' + req.params.type + ' = $2 WHERE mac = $1', [data.response[0].mac, 2])
-                                                            res.json({
+                                                    if (res_pressure_data.response.length >= 10) {
+                                                        device_endtime = res_pressure_data.response[0].timestamp
+                                                        device_starttime = res_pressure_data.response[res_pressure_data.response.length - 1].timestamp
+                                                        if ((device_endtime - device_starttime) > 90 * 1000) {
+                                                            await db.db_update('UPDATE capsule.capsule SET test_pressure_' + req.params.type + ' = $2 WHERE mac = $1', [this_mac, 2])
+                                                            api_res.push({
                                                                 code: 200,
-                                                                massage: '寫入成功,BLE筆數不足無法比對',
+                                                                massage: '寫入成功,DATA時間超過1分鐘無法比對',
                                                                 response: [{
                                                                     timestamp: payload[0],
                                                                     mac: payload[1],
                                                                     value: payload[2],
                                                                     raw: payload[3],
-                                                                    ble_data: res_ble_data.response
+                                                                    device_starttime: device_starttime,
+                                                                    device_endtime: device_endtime
                                                                 }]
                                                             })
+                                                            return;
                                                         }
-                                                    })
+                                                    } else {
+                                                        await db.db_update('UPDATE capsule.capsule SET test_pressure_' + req.params.type + ' = $2 WHERE mac = $1', [this_mac, 2])
+                                                        api_res.push({
+                                                            code: 200,
+                                                            massage: '寫入成功,DATA筆數不足無法比對',
+                                                            response: [{
+                                                                timestamp: payload[0],
+                                                                mac: payload[1],
+                                                                value: payload[2],
+                                                                raw: payload[3]
+                                                            }]
+                                                        })
+                                                        return
+                                                    }
+                                                    const sum = device_data.reduce((a, b) => a + b, 0)
+                                                    device_avg = (sum / device_data.length) || 0
+
+                                                    await db.db_query('Select * From capsule.ble_data Where mac = $1 AND timestamp < $2 ORDER BY timestamp DESC Limit 10', [this_mac, device_endtime])
+                                                        .then(async res_ble_data => {
+                                                            if (res_ble_data.response.length >= 10) {
+                                                                for (let i = 0; i < res_ble_data.response.length; i++) {
+                                                                    ble_data.push(res_ble_data.response[i].pressure)
+                                                                }
+                                                                ble_endtime = res_ble_data.response[0].timestamp
+                                                                ble_starttime = res_ble_data.response[res_ble_data.response.length - 1].timestamp
+
+                                                                const sum = ble_data.reduce((a, b) => a + b, 0)
+                                                                ble_avg = (sum / ble_data.length) || 0
+
+                                                                console.log('threshold_pressure', threshold_pressure)
+                                                                console.log('device_data', device_data)
+                                                                console.log('device_avg', device_avg)
+                                                                console.log('device_starttime', device_starttime)
+                                                                console.log('device_endtime', device_endtime)
+                                                                console.log('diff_time', device_endtime - device_starttime)
+                                                                console.log('ble_data', ble_data)
+                                                                console.log('ble_avg', ble_avg)
+                                                                console.log('device_starttime', ble_starttime)
+                                                                console.log('device_endtime', ble_endtime)
+                                                                console.log('diff_time', ble_endtime - ble_starttime)
+
+                                                                if ((ble_endtime - ble_starttime) > 90 * 1000) {
+                                                                    await db.db_update('UPDATE capsule.capsule SET test_pressure_' + req.params.type + ' = $2 WHERE mac = $1', [this_mac, 2])
+                                                                    api_res.push({
+                                                                        code: 200,
+                                                                        massage: '寫入成功,BLE時間超過1分鐘無法比對',
+                                                                        response: [{
+                                                                            timestamp: payload[0],
+                                                                            mac: payload[1],
+                                                                            value: payload[2],
+                                                                            raw: payload[3],
+                                                                            ble_starttime: ble_starttime,
+                                                                            ble_endtime: ble_endtime,
+                                                                            ble_data: res_ble_data.response
+                                                                        }]
+                                                                    })
+                                                                    return;
+                                                                }
+
+                                                                if (Math.abs(ble_avg - device_avg) < threshold_pressure) {
+                                                                    pass_result = 1
+                                                                } else {
+                                                                    pass_result = 0
+                                                                }
+
+                                                                await db.db_update('UPDATE capsule.capsule SET test_pressure_' + req.params.type + ' = $2 WHERE mac = $1', [this_mac, pass_result])
+                                                                    .then(up_res => {
+                                                                        api_res.push({
+                                                                            code: 200,
+                                                                            massage: '寫入成功,比對成功',
+                                                                            response: [{
+                                                                                timestamp: payload[0],
+                                                                                mac: payload[1],
+                                                                                value: payload[2],
+                                                                                raw: payload[3],
+                                                                                threshold_pressure: threshold_pressure,
+                                                                                device_data: res_pressure_data.response,
+                                                                                device_avg: device_avg,
+                                                                                ble_data: res_ble_data.response,
+                                                                                ble_avg: ble_avg,
+                                                                                pass: pass_result
+                                                                            }]
+                                                                        })
+                                                                        return;
+                                                                    })
+
+                                                            } else {
+                                                                await db.db_update('UPDATE capsule.capsule SET test_pressure_' + req.params.type + ' = $2 WHERE mac = $1', [this_mac, 2])
+                                                                api_res.push({
+                                                                    code: 200,
+                                                                    massage: '寫入成功,BLE筆數不足無法比對',
+                                                                    response: [{
+                                                                        timestamp: payload[0],
+                                                                        mac: payload[1],
+                                                                        value: payload[2],
+                                                                        raw: payload[3],
+                                                                        ble_data: res_ble_data.response
+                                                                    }]
+                                                                })
+                                                                return;
+                                                            }
+                                                        })
 
 
-                                            })
-                                    }
+                                                })
+                                        }
 
-                                })
+                                    })
 
-                        })
+                            })
+                    }
 
+                    res.json({
+                        code: 200,
+                        massage: '',
+                        mac: mac_list,
+                        response: api_res
+                    })
 
                 } else {
                     res.json({
-                        code: 500, massage: '目前沒有要量測溫度的膠囊'
+                        code: 500, massage: '目前沒有要量測壓力的膠囊'
                     })
                 }
             })
@@ -2476,9 +2493,127 @@ router.post('/multi_thermometer_list', function (req, res, next) {
                 });
         })
 });
+//新增膠囊至multi_pressure_list
+router.post('/multi_pressure_list', function (req, res, next) {
+
+    db.db_query('Select * From capsule.threshold_v')
+        .then(data => {
+            let threshold_pressure_750 = 0
+            let threshold_pressure_800 = 0
+            let threshold_pressure_850 = 0
+            let threshold_pressure_750_pcba = 0
+            let threshold_pressure_800_pcba = 0
+            let threshold_pressure_850_pcba = 0
+            let threshold_thermometer = 0
+            let threshold_thermometer_pcba = 0
+            let threshold_rf = 0
+            let threshold_rf_pcba = 0
+
+            if (data.response.length > 0) {
+                threshold_pressure_750 = data.response[0].pressure_750
+                threshold_pressure_800 = data.response[0].pressure_800
+                threshold_pressure_850 = data.response[0].pressure_850
+                threshold_pressure_750_pcba = data.response[0].pressure_750_pcba
+                threshold_pressure_800_pcba = data.response[0].pressure_800_pcba
+                threshold_pressure_850_pcba = data.response[0].pressure_850_pcba
+                threshold_thermometer = data.response[0].thermometer
+                threshold_thermometer_pcba = data.response[0].thermometer_pcba
+                threshold_rf = data.response[0].rf
+                threshold_rf_pcba = data.response[0].rf_pcba
+            }
+
+            const reqBodyData = [req.body.mac.toLowerCase()];
+            db.db_query('Select * From capsule.capsule Where mac = $1', reqBodyData)
+                .then(data2 => {
+                    if (data2.response.length == 0) {
+                        const payload = [moment().format(), req.body.mac.toLowerCase(), threshold_pressure_750, threshold_pressure_800, threshold_pressure_850, threshold_pressure_750_pcba, threshold_pressure_800_pcba, threshold_pressure_850_pcba, threshold_thermometer, threshold_thermometer_pcba, threshold_rf, threshold_rf_pcba];
+                        db.db_insert('INSERT INTO capsule.capsule (' + 'timestamp, mac, ' + 'threshold_pressure_750, ' + 'threshold_pressure_800, ' + 'threshold_pressure_850, ' + 'threshold_pressure_750_pcba, ' + 'threshold_pressure_800_pcba, ' + 'threshold_pressure_850_pcba, ' + 'threshold_thermometer, ' + 'threshold_thermometer_pcba, ' + 'threshold_rf, ' + 'threshold_rf_pcba ' + ') VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)', payload)
+                    }
+                    db.db_query('Select * From capsule.multi_pressure_list')
+                        .then(data3 => {
+                            for (let i = 0; i < data3.response.length; i++) {
+                                if (data3.response[i].mac == req.body.mac.toLowerCase()) {
+                                    res.json({
+                                        code: 500, massage: '加入失敗，已存在於清單中'
+                                    })
+                                }
+                            }
+                            if (data3.response.length >= 6) {
+                                res.json({
+                                    code: 500, massage: '加入失敗，目前已加入六個膠囊'
+                                })
+                            } else {
+                                const payload2 = [moment().format(), req.body.mac.toLowerCase()]
+                                db.db_insert('INSERT INTO capsule.multi_pressure_list (timestamp, mac) VALUES ($1, $2)', payload2)
+                                    .then(data3 => {
+                                        res.json({
+                                            code: 200, massage: '加入成功', response: [{
+                                                timestamp: payload2[0], mac: payload2[1],
+                                            }]
+                                        })
+                                    })
+                                    .catch(error => {
+                                        res.status(500).send(error)
+                                    });
+                            }
+                        })
+
+                })
+                .catch(error => {
+                    res.status(500).send(error);
+                });
+        })
+});
 
 router.get('/multi_thermometer_list', function (req, res, next) {
     db.db_query('SELECT * FROM capsule.multi_thermometer_list order by timestamp DESC')
+        .then(data => {
+            const mac_array = []
+            for (let i = 0; i < data.response.length; i++) {
+                mac_array.push(`'${data.response[i].mac}'`)
+            }
+            if (mac_array.length > 0) {
+                console.log(mac_array.join())
+                db.db_query('Select csv.*,\n' +
+                    '       c.threshold_pressure_750,\n' +
+                    '       c.threshold_pressure_800,\n' +
+                    '       c.threshold_pressure_850,\n' +
+                    '       c.threshold_pressure_750_pcba,\n' +
+                    '       c.threshold_pressure_800_pcba,\n' +
+                    '       c.threshold_pressure_850_pcba,\n' +
+                    '       c.threshold_thermometer,\n' +
+                    '       c.threshold_thermometer_pcba,\n' +
+                    '       c.threshold_rf,\n' +
+                    '       c.threshold_rf_pcba,\n' +
+                    '       c.test_pressure_750,\n' +
+                    '       c.test_pressure_800,\n' +
+                    '       c.test_pressure_850,\n' +
+                    '       c.test_pressure_750_pcba,\n' +
+                    '       c.test_pressure_800_pcba,\n' +
+                    '       c.test_pressure_850_pcba,\n' +
+                    '       c.test_thermometer,\n' +
+                    '       c.test_thermometer_pcba,\n' +
+                    '       c.test_rf,\n' +
+                    '       c.test_rf_pcba\n' +
+                    'From capsule.capsule_state_v csv\n' +
+                    '         left join capsule.capsule c on csv.mac = c.mac\n' +
+                    'where csv.mac in (' + mac_array.join() + ')' +
+                    'order by c.timestamp asc')
+                    .then(data2 => {
+                        console.log(data2.response)
+                        res.json(data2)
+                    })
+            } else {
+                res.status(200).send({'code': 200, 'massage': 'query success', response: []});
+            }
+        })
+        .catch(error => {
+            res.status(500).send(error);
+        });
+});
+
+router.get('/multi_pressure_list', function (req, res, next) {
+    db.db_query('SELECT * FROM capsule.multi_pressure_list order by timestamp DESC')
         .then(data => {
             const mac_array = []
             for (let i = 0; i < data.response.length; i++) {
@@ -2539,10 +2674,42 @@ router.delete('/multi_thermometer_list/:mac', function (req, res, next) {
         });
 });
 
+router.delete('/multi_pressure_list/:mac', function (req, res, next) {
+    const data = [req.params.mac];
+    db.db_query('DELETE\n' +
+        'FROM capsule.multi_pressure_list\n' +
+        'WHERE mac = $1', data)
+        .then(data => {
+            res.json({
+                code: 200, massage: '刪除成功'
+            })
+        })
+        .catch(error => {
+            res.status(500).send(error);
+        });
+});
+
 router.delete('/multi_thermometer_list', function (req, res, next) {
     db.db_query('DELETE\n' +
         'FROM capsule.multi_thermometer_list')
         .then(data => {
+            db.db_insert('INSERT INTO capsule.multi_tester_state (type, state) VALUES ($1, $2) ON CONFLICT (type) DO UPDATE SET state = $2', ['thermometer', 0])
+            res.json({
+                code: 200, massage: '刪除成功'
+            })
+        })
+        .catch(error => {
+            res.status(500).send(error);
+        });
+});
+
+router.delete('/multi_pressure_list', function (req, res, next) {
+    db.db_query('DELETE\n' +
+        'FROM capsule.multi_pressure_list')
+        .then(data => {
+            db.db_insert('INSERT INTO capsule.multi_tester_state (type, state) VALUES ($1, $2) ON CONFLICT (type) DO UPDATE SET state = $2', ['pressure_750', 0])
+            db.db_insert('INSERT INTO capsule.multi_tester_state (type, state) VALUES ($1, $2) ON CONFLICT (type) DO UPDATE SET state = $2', ['pressure_800', 0])
+            db.db_insert('INSERT INTO capsule.multi_tester_state (type, state) VALUES ($1, $2) ON CONFLICT (type) DO UPDATE SET state = $2', ['pressure_850', 0])
             res.json({
                 code: 200, massage: '刪除成功'
             })
@@ -2555,6 +2722,18 @@ router.delete('/multi_thermometer_list', function (req, res, next) {
 router.get('/multi_state/:type', function (req, res, next) {
     const payload = [req.params.type]
     db.db_query('SELECT * FROM capsule.multi_tester_state where type = $1', payload)
+        .then(data => {
+            res.json(data)
+        })
+        .catch(error => {
+            res.status(500).send(error);
+        });
+});
+
+router.get('/multi_state_pressure', function (req, res, next) {
+    db.db_query(`SELECT *
+                 FROM capsule.multi_tester_state
+                 where type LIKE 'pressure%'`)
         .then(data => {
             res.json(data)
         })
@@ -2593,6 +2772,73 @@ router.put('/multi_state/:type', (req, res) => {
                         case '1':
                             const data = [moment().format(), req.params.type]
                             db.db_update('UPDATE capsule.capsule_state SET state = 2, endtime = $1 WHERE state = 1 and type = $2 and mac not IN (Select mac From capsule.multi_thermometer_list)', data)
+
+                            for (let i = 0; i < mac_array.length; i++) {
+                                const payload = [moment().format(), mac_array[i], req.params.type, req.body.state]
+                                db.db_insert('INSERT INTO capsule.capsule_state (timestamp, mac, type, state, starttime) VALUES ($1, $2, $3, $4, $1) ON CONFLICT (mac, type) DO UPDATE SET state = $4, starttime = $1', payload)
+                            }
+                            res.json({
+                                code: 200, massage: 'update success', response: [{
+                                    type: req.params.type, state: req.body.state,
+                                }]
+                            })
+                            break;
+                        case '2':
+                            for (let i = 0; i < mac_array.length; i++) {
+                                const payload = [moment().format(), mac_array[i], req.params.type, req.body.state]
+                                db.db_insert('INSERT INTO capsule.capsule_state (timestamp, mac, type, state, starttime, endtime) VALUES ($1, $2, $3, $4, $1, $1) ON CONFLICT (mac, type) DO UPDATE SET state = $4, endtime = $1', payload)
+                            }
+                            res.json({
+                                code: 200, massage: 'update success', response: [{
+                                    type: req.params.type, state: req.body.state,
+                                }]
+                            })
+                            break;
+                        default:
+                            res.status(500).send({
+                                code: 500, massage: 'state error', response: []
+                            })
+                    }
+                })
+                .catch(error => {
+                    res.status(500).send(error)
+                });
+        })
+        .catch(error => {
+            res.status(500).send(error)
+        });
+})
+
+router.put('/multi_pressure_state/:type', (req, res) => {
+    const payload = [req.params.type, req.body.state]
+    db.db_insert('INSERT INTO capsule.multi_tester_state (type, state) VALUES ($1, $2) ON CONFLICT (type) DO UPDATE SET state = $2', payload)
+        .then(data => {
+            let mac_array = [];
+            db.db_query('Select * From capsule.multi_pressure_list')
+                .then(data2 => {
+                    data2.response.map(entry => {
+                        mac_array.push(entry.mac);
+                    })
+                    switch (req.body.state) {
+                        case '0':
+                            db.db_delete(`DELETE
+                                          FROM capsule.capsule_state
+                                          WHERE mac IN (Select mac From capsule.multi_pressure_list)
+                                            and type = $1`, [req.params.type])
+                                .then(result => {
+                                    res.json({
+                                        code: 200, massage: 'update success', response: [{
+                                            type: req.params.type, state: req.body.state,
+                                        }]
+                                    })
+                                })
+                                .catch(error => {
+                                    res.status(500).send(error)
+                                });
+                            break;
+                        case '1':
+                            const data = [moment().format(), req.params.type]
+                            db.db_update('UPDATE capsule.capsule_state SET state = 2, endtime = $1 WHERE state = 1 and type = $2 and mac not IN (Select mac From capsule.multi_pressure_list)', data)
 
                             for (let i = 0; i < mac_array.length; i++) {
                                 const payload = [moment().format(), mac_array[i], req.params.type, req.body.state]

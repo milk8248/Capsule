@@ -62,6 +62,7 @@ import receiverAuto from "./screens/Ble/ReceiverAuto";
 import multiThermometer from "./screens/Ble/MultiThermometer";
 import uploadcapsuleble from "./screens/Ble/UploadCapsuleBle";
 import uploadcapsulereceivercsv from "./screens/Ble/UploadCapsuleReceiverCsv";
+import multiPressure from "./screens/Ble/MultiPressure";
 
 window.__DEV__ = true;
 
@@ -155,6 +156,11 @@ class App extends React.Component {
                     exact
                     path={`${process.env.PUBLIC_URL}/multi_thermometer`}
                     component={multiThermometer}
+                />
+                <Route
+                    exact
+                    path={`${process.env.PUBLIC_URL}/multi_pressure`}
+                    component={multiPressure}
                 />
                 <Route
                     exact

@@ -91,9 +91,9 @@ class NavbarMenu extends React.Component {
                 <li className={activeKey === "multi_thermometer" ? "active" : ""}>
                   <Link to="/multi_thermometer"><i className="icon-list"></i> <span>6顆膠囊測試溫度</span></Link>
                 </li>
-                {/*<li className={activeKey === "multi_pressure" ? "active" : ""}>*/}
-                {/*  <Link to="/multi_pressure"><i className="icon-list"></i> <span>6顆膠囊測試壓力</span></Link>*/}
-                {/*</li>*/}
+                <li className={activeKey === "multi_pressure" ? "active" : ""}>
+                  <Link to="/multi_pressure"><i className="icon-list"></i> <span>6顆膠囊測試壓力</span></Link>
+                </li>
                 {/*<li className={activeKey === "receiver" ? "active" : ""}>*/}
                 {/*  <Link to="/receiver"><i className="icon-list"></i> <span>接收器清單</span></Link>*/}
                 {/*</li>*/}
