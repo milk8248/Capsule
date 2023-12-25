@@ -24,9 +24,11 @@ class MultiThermometer extends React.Component {
         super(props);
         this.state = {
             capsules: [],
-            multiTestState: 0
+            multiTestState: 0,
+            multiTesterTime: 7
         };
 
+        this.getMultiTester();
         this.getMultiTestState();
         this.getMultiThermometerList();
     }
@@ -44,6 +46,19 @@ class MultiThermometer extends React.Component {
         } else {
             this.addCapsuleCard(text);
         }
+    }
+
+    handleInputChange = (e) => {
+        this.setState({
+            multiTesterTime: e.target.value,
+        })
+    }
+
+    submitForm = (e) => {
+        // this.props.handleMacChange(this.state.bleMac)
+        console.log(e)
+        e.preventDefault()
+        return false
     }
 
     addCapsuleCard = (bleMac) => {
@@ -70,6 +85,20 @@ class MultiThermometer extends React.Component {
     componentDidMount() {
         window.scrollTo(0, 0);
     }
+
+    getMultiTester = () => {
+        fetch('/api/multi_tester/thermometer', {
+            method: 'GET',
+            headers: {"Content-Type": "application/json"},
+        })
+            .then(response => response.json())
+            .then(response => {
+                this.setState({
+                    multiTesterTime: response.response[0].time
+                })
+            })
+            .catch(err => console.error(err));
+    };
 
     getMultiTestState = () => {
         fetch('/api/multi_state/thermometer', {
@@ -102,24 +131,6 @@ class MultiThermometer extends React.Component {
                 } else {
                     this.setState({
                         capsules: []
-                    })
-                }
-            })
-            .catch(err => console.error(err));
-    };
-
-    getCapsuleThreshold = (bleMac) => {
-        fetch('/api/receiver_auto/' + bleMac, {
-            method: 'GET',
-            headers: {"Content-Type": "application/json"},
-        })
-            .then(response => response.json())
-            .then(response => {
-                if (response.response.length > 0) {
-                    this.setState({
-                        threshold_pressure_750: response.response[0].threshold_pressure_750,
-                        threshold_pressure_800: response.response[0].threshold_pressure_800,
-                        threshold_pressure_850: response.response[0].threshold_pressure_850,
                     })
                 }
             })
@@ -160,12 +171,11 @@ class MultiThermometer extends React.Component {
             .catch(err => console.error(err));
     };
 
-    putCapsuleThreshold = (type, value) => {
+    putMultiTesterTime = (time) => {
         var urlencoded = new URLSearchParams();
-        urlencoded.append("type", type);
-        urlencoded.append("value", value);
-        urlencoded.append("mac", this.state.bleMac);
-        fetch('/api/receiver_auto/threshold', {
+        urlencoded.append("time", time);
+
+        fetch('/api/multi_tester/thermometer', {
             method: 'PUT',
             body: urlencoded
         })
@@ -173,7 +183,7 @@ class MultiThermometer extends React.Component {
             .then(response => {
                 if (response.code == 200) {
                     alert('更新成功!')
-                    this.getCapsuleThreshold(this.state.bleMac);
+                    this.getMultiTester();
 
                 } else if (response.code == 500) {
                     alert(response.massage)
@@ -219,11 +229,22 @@ class MultiThermometer extends React.Component {
         }
     }
 
+    submitForm = (e) => {
+        if(/^[1-9]\d*$/.test(this.state.multiTesterTime)) {
+            this.putMultiTesterTime(this.state.multiTesterTime)
+        }else{
+            alert('輸入格式有誤，請輸入分鐘（正整數）')
+        }
+        e.preventDefault()
+        return false
+    }
+
     render() {
 
         const {
             capsules,
-            multiTestState
+            multiTestState,
+            multiTesterTime
         } = this.state;
 
         return (
@@ -258,6 +279,7 @@ class MultiThermometer extends React.Component {
                                                         className="form-control"
                                                         placeholder="分鐘"
                                                         type="number"
+                                                        value={multiTesterTime}
                                                         onChange={this.handleInputChange}
                                                     />
                                                     <div className="input-group-append">

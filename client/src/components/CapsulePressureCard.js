@@ -25,10 +25,10 @@ class CapsulePressureCard extends React.Component {
         this.getBleData(capsule.mac)
         this.getPressureData(capsule.mac)
 
-        // setInterval(() => {
-        //     this.getBleData(capsule.mac)
-        //     this.getPressureData(capsule.mac)
-        // }, 1000);
+        setInterval(() => {
+            this.getBleData(capsule.mac)
+            this.getPressureData(capsule.mac)
+        }, 1000);
 
     }
 
@@ -158,7 +158,7 @@ class CapsulePressureCard extends React.Component {
         }
 
         // console.log(chartBData)
-        console.log(chartDate)
+        // console.log(chartDate)
 
         const option = {
             legend: {

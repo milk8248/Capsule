@@ -876,7 +876,7 @@ router.post('/pressure/:type', async function (req, res, next) {
                     for (const cap of data.response) {
                         const this_mac = cap.mac
                         mac_list.push(this_mac)
-                        await db.db_insert('INSERT INTO capsule.ble_data (timestamp, mac, pressure) VALUES ($1, $2, $3)', [moment().format(), this_mac, 750.2])
+                        // await db.db_insert('INSERT INTO capsule.ble_data (timestamp, mac, pressure) VALUES ($1, $2, $3)', [moment().format(), this_mac, 750.2])
                         const payload = [moment().format(), this_mac, req.body.value, req.body.raw, req.params.type];
                         await db.db_insert('INSERT INTO capsule.pressure_data (timestamp, mac, value, raw, type) VALUES ($1, $2, $3, $4, $5)', payload)
                             .then(async data2 => {
@@ -1737,7 +1737,15 @@ router.post('/upload_ble_csv', upload.single('file'), (req, res) => {
 })
 
 router.post('/upload_ble_receiver_csv', upload.single('file'), (req, res) => {
-    receiverCsvToDb(uploadFolderPath + '/' + req.file.filename)
+    db.db_query('select * from capsule.receiver_auto_state as ras where ras.state=1')
+        .then(data => {
+            if (data.response.length != 0) {
+                receiverCsvToDb(uploadFolderPath + '/' + req.file.filename, data.response[0].mac)
+
+                db.db_update('UPDATE capsule.receiver_auto_state SET state = 2, endtime = $1 WHERE state = 1 and mac = $2', [moment().format(), data.response[0].mac])
+            }
+        })
+
     res.json({
         code: 200, msg: 'File successfully inserted!', file: req.file,
     })
@@ -1819,7 +1827,7 @@ function csvToDb(csvUrl) {
     stream.pipe(csvFileStream)
 }
 
-function receiverCsvToDb(csvUrl) {
+function receiverCsvToDb(csvUrl, mac) {
     let stream = fs.createReadStream(csvUrl)
     let collectionCsv = []
     let csvFileStream = csv
@@ -1832,8 +1840,9 @@ function receiverCsvToDb(csvUrl) {
                 if (row[0] == 'Date') {
                     return
                 }
+
                 row[0] = moment(row[0], 'YYYYMMDD-hh:mm:ss').format()
-                row[1] = row[1].toLowerCase()
+                row[1] = mac.toLowerCase()
                 // console.log(row)
                 payload = [row[0], row[1]]
                 db.db_query('select * from capsule.receiver_data where timestamp = $1 and mac = $2', payload)
@@ -2875,5 +2884,82 @@ router.put('/multi_pressure_state/:type', (req, res) => {
             res.status(500).send(error)
         });
 })
+
+router.get('/multi_tester/:type', function (req, res, next) {
+    const payload = [req.params.type]
+    db.db_query('SELECT * FROM capsule.multi_tester where type = $1', payload)
+        .then(data => {
+            res.json(data)
+        })
+        .catch(error => {
+            res.status(500).send(error);
+        });
+});
+
+router.put('/multi_tester/:type', (req, res) => {
+    const payload = [req.params.type, req.body.time]
+    db.db_insert('INSERT INTO capsule.multi_tester (type, time) VALUES ($1, $2) ON CONFLICT (type) DO UPDATE SET time = $2', payload)
+        .then(data => {
+            res.json({
+                code: 200, massage: 'update success', response: [{
+                    type: req.params.type, time: req.body.time,
+                }]
+            })
+        })
+        .catch(error => {
+            res.status(500).send(error)
+        });
+})
+
+router.post('/instrument_standard', function (req, res, next) {
+    const payload = [moment().format(), req.body.flag];
+    db.db_insert('INSERT INTO capsule.instrument_standard (timestamp, flag) VALUES ($1, $2) ON CONFLICT (timestamp) DO UPDATE SET flag = $2, timestamp = $1', payload)
+        .then(result => {
+            res.json({
+                code: 200, massage: 'update success', response: [{
+                    timestamp: payload[0], flag: payload[1],
+                }]
+            })
+        })
+        .catch(error => {
+            res.status(500).send(error)
+        });
+});
+
+router.post('/capsule_standard', function (req, res, next) {
+    const payload = [moment().format(), req.body.flag];
+    db.db_insert('INSERT INTO capsule.capsule_standard (timestamp, flag) VALUES ($1, $2) ON CONFLICT (timestamp) DO UPDATE SET flag = $2, timestamp = $1', payload)
+        .then(result => {
+            res.json({
+                code: 200, massage: 'update success', response: [{
+                    timestamp: payload[0], flag: payload[1],
+                }]
+            })
+        })
+        .catch(error => {
+            res.status(500).send(error)
+        });
+});
+
+router.get('/receiver_csv_mac', function (req, res, next) {
+    db.db_query('select mac from capsule.receiver_data group by mac order by mac asc')
+        .then(data => {
+            res.json(data)
+        })
+        .catch(error => {
+            res.status(500).send(error);
+        });
+});
+
+router.get('/receiver_csv/:mac', function (req, res, next) {
+    const payload = [req.params.mac]
+    db.db_query('select rd.*, cs.timestamp as cs_timestamp, ins.flag as std_pressure from capsule.receiver_data as rd, capsule.capsule_standard as cs, capsule.instrument_standard as ins where rd.tag_counter = cs.flag and cs.timestamp = ins.timestamp and mac = $1', payload)
+        .then(data => {
+            res.json(data)
+        })
+        .catch(error => {
+            res.status(500).send(error);
+        });
+});
 
 module.exports = router;

@@ -9,7 +9,7 @@ services:
     depends_on:
       - db
     stdin_open: true
-    image: milk8248/capsule-web:0.1.13
+    image: milk8248/capsule-web:0.1.15
     volumes:
       - ./upload:/snapshot/app/routes/upload
     environment:

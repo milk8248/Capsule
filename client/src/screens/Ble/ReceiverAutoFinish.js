@@ -66,7 +66,7 @@ class ReceiverAutoFinish extends React.Component {
     }
 
     getPressureData = (bleMac) => {
-        fetch('/api/receiver_auto/pressure/' + bleMac, {
+        fetch('/api/receiver_csv/' + bleMac, {
             method: 'GET',
             headers: {"Content-Type": "application/json"},
         })
@@ -347,13 +347,8 @@ class ReceiverAutoFinish extends React.Component {
                 }
                 {bleMac !== '' &&
                     <PressureTable
-                        width="col-md-6"
+                        width="col-md-12"
                         pressureData={pressureData}/>
-                }
-                {bleMac !== '' &&
-                    <ReceiverAutoTable
-                        width="col-md-6"
-                        bleData={bleData}/>
                 }
 
             </div>

@@ -16,20 +16,30 @@ class PressureTable extends React.Component {
                 key: 'timestamp',
             },
             {
-                title: '標準',
-                dataIndex: 'type',
-                key: 'type',
-            },
-            {
-                title: '壓力',
-                dataIndex: 'value',
-                key: 'pressure',
-                render: (_, {value}) => (
+                title: '標準儀器壓力',
+                dataIndex: 'std_pressure',
+                key: 'std_pressure',
+                render: (_, {std_pressure}) => (
                     <>
-                        {value} mmHg
+                        {std_pressure} mmHg
                     </>
                 ),
             },
+            {
+                title: '接收器壓力',
+                dataIndex: 'reader_pressure',
+                key: 'reader_pressure',
+                render: (_, {reader_pressure}) => (
+                    <>
+                        {reader_pressure} mmHg
+                    </>
+                ),
+            },
+            {
+                title: '流水號',
+                dataIndex: 'tag_counter',
+                key: 'tag_counter',
+            }
         ];
 
         return (
@@ -37,7 +47,7 @@ class PressureTable extends React.Component {
                 <div className="card">
                     <div className="header">
                         <h2>
-                            壓力儀資料{" "}
+                            壓力測試資料{" "}
                             <small>
                                 來自壓力計量測的資料
                             </small>

@@ -18,6 +18,7 @@ import {Dropdown} from "react-bootstrap";
 import ReactEcharts from "echarts-for-react";
 import {InputText} from "primereact/inputtext";
 import CapsulePressureCard from "../../components/CapsulePressureCard";
+import {Input} from "antd";
 
 class MultiPressure extends React.Component {
 
@@ -28,9 +29,11 @@ class MultiPressure extends React.Component {
             multiTestPressure750State: 0,
             multiTestPressure800State: 0,
             multiTestPressure850State: 0,
-            multiTestState: 0
+            multiTestState: 0,
+            multiTesterTime: 7
         };
 
+        this.getMultiTester();
         this.getMultiTestState();
         this.getMultiPressureList();
     }
@@ -48,6 +51,12 @@ class MultiPressure extends React.Component {
         } else {
             this.addCapsuleCard(text);
         }
+    }
+
+    handleInputChange = (e) => {
+        this.setState({
+            multiTesterTime: e.target.value,
+        })
     }
 
     addCapsuleCard = (bleMac) => {
@@ -74,6 +83,20 @@ class MultiPressure extends React.Component {
     componentDidMount() {
         window.scrollTo(0, 0);
     }
+
+    getMultiTester = () => {
+        fetch('/api/multi_tester/pressure', {
+            method: 'GET',
+            headers: {"Content-Type": "application/json"},
+        })
+            .then(response => response.json())
+            .then(response => {
+                this.setState({
+                    multiTesterTime: response.response[0].time
+                })
+            })
+            .catch(err => console.error(err));
+    };
 
     getMultiTestState = () => {
         fetch('/api/multi_state_pressure', {
@@ -189,6 +212,29 @@ class MultiPressure extends React.Component {
             .catch(err => console.error(err));
     };
 
+    putMultiTesterTime = (time) => {
+        var urlencoded = new URLSearchParams();
+        urlencoded.append("time", time);
+
+        fetch('/api/multi_tester/pressure', {
+            method: 'PUT',
+            body: urlencoded
+        })
+            .then(response => response.json())
+            .then(response => {
+                if (response.code == 200) {
+                    alert('更新成功!')
+                    this.getMultiTester();
+
+                } else if (response.code == 500) {
+                    alert(response.massage)
+                } else {
+                    alert("輸入有錯誤")
+                }
+            })
+            .catch(err => console.error(err));
+    };
+
     putCapsuleThreshold = (type, value) => {
         var urlencoded = new URLSearchParams();
         urlencoded.append("type", type);
@@ -248,6 +294,16 @@ class MultiPressure extends React.Component {
         }
     }
 
+    submitForm = (e) => {
+        if(/^[1-9]\d*$/.test(this.state.multiTesterTime)) {
+            this.putMultiTesterTime(this.state.multiTesterTime)
+        }else{
+            alert('輸入格式有誤，請輸入分鐘（正整數）')
+        }
+        e.preventDefault()
+        return false
+    }
+
     render() {
 
         const {
@@ -255,7 +311,8 @@ class MultiPressure extends React.Component {
             multiTestState,
             multiTestPressure750State,
             multiTestPressure800State,
-            multiTestPressure850State
+            multiTestPressure850State,
+            multiTesterTime
         } = this.state;
 
         let pressureType = ''
@@ -303,6 +360,7 @@ class MultiPressure extends React.Component {
                                                         className="form-control"
                                                         placeholder="分鐘"
                                                         type="number"
+                                                        value={multiTesterTime}
                                                         onChange={this.handleInputChange}
                                                     />
                                                     <div className="input-group-append">
@@ -421,7 +479,7 @@ class MultiPressure extends React.Component {
                                 <CapsulePressureCard
                                     key={item.mac}
                                     capsule={item}
-                                    multiTestState = {multiTestState}
+                                    multiTestState={multiTestState}
                                     handleDeleteCard={() => {
                                         this.deleteMultiPressureList(item.mac);
                                     }}

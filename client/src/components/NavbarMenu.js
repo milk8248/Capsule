@@ -73,7 +73,7 @@ class NavbarMenu extends React.Component {
               </a>
             </div>
             <div className="navbar-right">
-              <div className="pull-right">v0.1.12</div>
+              <div className="pull-right">v0.1.15</div>
             </div>
           </div>
         </nav>
@@ -88,6 +88,9 @@ class NavbarMenu extends React.Component {
                 <li className={activeKey === "receiver_auto" ? "active" : ""}>
                   <Link to="/receiver_auto"><i className="icon-list"></i> <span>接收器清單(自動上傳)</span></Link>
                 </li>
+                {/*<li className={activeKey === "receiver" ? "active" : ""}>*/}
+                {/*  <Link to="/receiver"><i className="icon-list"></i> <span>接收器CSV清單</span></Link>*/}
+                {/*</li>*/}
                 <li className={activeKey === "multi_thermometer" ? "active" : ""}>
                   <Link to="/multi_thermometer"><i className="icon-list"></i> <span>6顆膠囊測試溫度</span></Link>
                 </li>

@@ -124,7 +124,7 @@ export default function ReceiverListTable(props) {
             <div className="card">
                 <div className="header">
                     <h2>
-                        接收器清單
+                        接收器CSV清單
                     </h2>
                 </div>
                 <div className="body table-responsive">
@@ -139,8 +139,6 @@ export default function ReceiverListTable(props) {
                                header={header}
                                emptyMessage="No data found.">
                         <Column field="mac" header="Mac" sortable body={macBodyTemplate}></Column>
-                        <Column field="pressure_state" header="氣壓"
-                                body={pressureStateBodyTemplate}></Column>
                     </DataTable>
                 </div>
             </div>

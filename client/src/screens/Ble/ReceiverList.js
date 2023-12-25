@@ -56,7 +56,7 @@ class ReceiverList extends React.Component {
   };
 
   getReceiver = () => {
-    fetch('/api/receiver', {
+    fetch('/api/receiver_csv_mac', {
       method: 'GET',
       headers: { "Content-Type": "application/json" },
     })
@@ -92,15 +92,12 @@ class ReceiverList extends React.Component {
         <div>
           <div className="container-fluid">
             <PageHeader
-              HeaderText="接收器清單"
+              HeaderText="接收器CSV"
               Breadcrumb={[
-                { name: "接收器清單", navigate: "" },
+                { name: "接收器CSV", navigate: "" },
               ]}
             />
             <div className="row clearfix">
-              <SearchReceiverCard handleMacChange={(text) => {
-                this.handleMacChange(text);
-              }} />
               <ReceiverListTable
                 receiverData={this.state.receiverData} />
             </div>
