@@ -1736,18 +1736,175 @@ router.post('/upload_ble_csv', upload.single('file'), (req, res) => {
     })
 })
 
-router.post('/upload_ble_receiver_csv', upload.single('file'), (req, res) => {
-    db.db_query('select * from capsule.receiver_auto_state as ras where ras.state=1')
-        .then(data => {
-            if (data.response.length != 0) {
-                receiverCsvToDb(uploadFolderPath + '/' + req.file.filename, data.response[0].mac)
+const checkReceiverResult = (mac) =>{
+    const payload = [mac]
+    db.db_query(`Select * From capsule.receiver_auto_state as ras, capsule.receiver_auto as ra Where ras.state = 1 and ras.mac = ra.mac and ra.mac = $1`, payload)
+        .then(async data => {
+            const api_res = []
+            if (data.response.length > 0) {
+                for (const cap of data.response) {
+                    const this_mac = cap.mac
+                    const type = cap.type
+                    let threshold_pressure = cap['threshold_' + type]
+                    let device_data = []
+                    let device_avg = 0
+                    let device_starttime, device_endtime
+                    let ble_data = []
+                    let ble_avg = 0
+                    let ble_starttime, ble_endtime
+                    let pass_result = 0
 
-                db.db_update('UPDATE capsule.receiver_auto_state SET state = 2, endtime = $1 WHERE state = 1 and mac = $2', [moment().format(), data.response[0].mac])
+                    await db.db_query(`SELECT
+                                 COALESCE(cs.timestamp, ins.timestamp) AS cs_timestamp,
+                                 rd.mac, rd.reader_pressure, rd.tag_counter,
+                                 ins.flag as std_pressure
+                             FROM capsule.capsule_standard as cs
+                             FULL OUTER JOIN capsule.instrument_standard as ins ON cs.timestamp = ins.timestamp
+                             LEFT JOIN capsule.receiver_data as rd ON cs.flag = rd.tag_counter
+                             WHERE rd.tag_counter = cs.flag and ins.flag is not null and rd.reader_pressure is not null and mac = $1
+                             ORDER BY cs_timestamp LIMIT 10`, [this_mac])
+                        .then(async res_pressure_data => {
+                            for (let i = 0; i < res_pressure_data.response.length; i++) {
+                                device_data.push(res_pressure_data.response[i].reader_pressure)
+                            }
+                            if (res_pressure_data.response.length >= 10) {
+                                device_endtime = res_pressure_data.response[0].timestamp
+                                device_starttime = res_pressure_data.response[res_pressure_data.response.length - 1].timestamp
+                                if ((device_endtime - device_starttime) > 90 * 1000) {
+                                    await db.db_update('UPDATE capsule.receiver_auto SET test_' + type + ' = $2 WHERE mac = $1', [this_mac, 2])
+                                    api_res.push({
+                                        code: 200,
+                                        massage: 'DATA時間超過1分鐘無法比對',
+                                        response: [{
+                                            mac: this_mac,
+                                            device_starttime: device_starttime,
+                                            device_endtime: device_endtime
+                                        }]
+                                    })
+                                    return;
+                                }
+                            } else {
+                                await db.db_update('UPDATE capsule.receiver_auto SET test_' + type + ' = $2 WHERE mac = $1', [this_mac, 2])
+                                api_res.push({
+                                    code: 200,
+                                    massage: 'DATA筆數不足無法比對',
+                                    response: [{
+                                        mac: this_mac,
+                                        device_data: device_data
+                                    }]
+                                })
+                                return
+                            }
+                            const sum = device_data.reduce((a, b) => a + b, 0)
+                            device_avg = (sum / device_data.length) || 0
+
+                            await db.db_query('Select * From capsule.instrument_standard Where timestamp between $1 and $2 ORDER BY timestamp DESC Limit 10', [device_starttime, device_endtime])
+                                .then(async res_ble_data => {
+                                    if (res_ble_data.response.length >= 10) {
+                                        for (let i = 0; i < res_ble_data.response.length; i++) {
+                                            ble_data.push(res_ble_data.response[i].flag)
+                                        }
+                                        ble_endtime = res_ble_data.response[0].timestamp
+                                        ble_starttime = res_ble_data.response[res_ble_data.response.length - 1].timestamp
+
+                                        const sum = ble_data.reduce((a, b) => a + b, 0)
+                                        ble_avg = (sum / ble_data.length) || 0
+
+                                        console.log('threshold_pressure', threshold_pressure)
+                                        console.log('device_data', device_data)
+                                        console.log('device_avg', device_avg)
+                                        console.log('device_starttime', device_starttime)
+                                        console.log('device_endtime', device_endtime)
+                                        console.log('diff_time', device_endtime - device_starttime)
+                                        console.log('ble_data', ble_data)
+                                        console.log('ble_avg', ble_avg)
+                                        console.log('device_starttime', ble_starttime)
+                                        console.log('device_endtime', ble_endtime)
+                                        console.log('diff_time', ble_endtime - ble_starttime)
+
+                                        if ((ble_endtime - ble_starttime) > 90 * 1000) {
+                                            await db.db_update('UPDATE capsule.capsule SET test_pressure_' + req.params.type + ' = $2 WHERE mac = $1', [this_mac, 2])
+                                            api_res.push({
+                                                code: 200,
+                                                massage: '寫入成功,BLE時間超過1分鐘無法比對',
+                                                response: [{
+                                                    mac: this_mac,
+                                                    ble_starttime: ble_starttime,
+                                                    ble_endtime: ble_endtime,
+                                                    ble_data: res_ble_data.response
+                                                }]
+                                            })
+                                            return;
+                                        }
+
+                                        if (Math.abs(ble_avg - device_avg) < threshold_pressure) {
+                                            pass_result = 1
+                                        } else {
+                                            pass_result = 0
+                                        }
+
+                                        await db.db_update('UPDATE capsule.receiver_auto SET test_' + type + ' = $2 WHERE mac = $1', [this_mac, pass_result])
+                                            .then(up_res => {
+                                                api_res.push({
+                                                    code: 200,
+                                                    massage: '寫入成功,比對成功',
+                                                    response: [{
+                                                        mac: this_mac,
+                                                        threshold_pressure: threshold_pressure,
+                                                        device_data: res_pressure_data.response,
+                                                        device_avg: device_avg,
+                                                        ble_data: res_ble_data.response,
+                                                        ble_avg: ble_avg,
+                                                        pass: pass_result
+                                                    }]
+                                                })
+                                                return;
+                                            })
+
+                                    } else {
+                                        await db.db_update('UPDATE capsule.receiver_auto SET test_' + type + ' = $2 WHERE mac = $1', [this_mac, 2])
+                                        api_res.push({
+                                            code: 200,
+                                            massage: '標準筆數不足無法比對',
+                                            response: [{
+                                                mac: this_mac,
+                                                ble_data: res_ble_data.response
+                                            }]
+                                        })
+                                        return;
+                                    }
+                                })
+                        })
+                }
+
+                return api_res
+
+            } else {
+                return [{
+                    code: 500, massage: '目前沒有要量測壓力的膠囊'
+                }]
+            }
+        })
+        .catch(error => {
+            res.status(500).send(error);
+        });
+}
+
+router.post('/upload_ble_receiver_csv', upload.single('file'), async (req, res) => {
+    let checkRes = ''
+
+    await db.db_query('select * from capsule.receiver_auto_state as ras where ras.state = 1')
+        .then(async data => {
+            if (data.response.length != 0) {
+                await receiverCsvToDb(uploadFolderPath + '/' + req.file.filename, data.response[0].mac)
+                checkRes = await checkReceiverResult(data.response[0].mac)
+
+                await db.db_update('UPDATE capsule.receiver_auto_state SET state = 2, endtime = $1 WHERE state = 1 and mac = $2', [moment().format(), data.response[0].mac])
             }
         })
 
-    res.json({
-        code: 200, msg: 'File successfully inserted!', file: req.file,
+    await res.json({
+        code: 200, msg: 'File successfully inserted!', file: req.file, checkRes:checkRes
     })
 })
 
@@ -2953,7 +3110,15 @@ router.get('/receiver_csv_mac', function (req, res, next) {
 
 router.get('/receiver_csv/:mac', function (req, res, next) {
     const payload = [req.params.mac]
-    db.db_query('select rd.*, cs.timestamp as cs_timestamp, ins.flag as std_pressure from capsule.receiver_data as rd, capsule.capsule_standard as cs, capsule.instrument_standard as ins where rd.tag_counter = cs.flag and cs.timestamp = ins.timestamp and mac = $1', payload)
+    db.db_query(`SELECT
+                COALESCE(cs.timestamp, ins.timestamp) AS cs_timestamp,
+                rd.mac, rd.reader_pressure, rd.tag_counter,
+                ins.flag as std_pressure
+            FROM capsule.capsule_standard as cs
+            FULL OUTER JOIN capsule.instrument_standard as ins ON cs.timestamp = ins.timestamp
+            LEFT JOIN capsule.receiver_data as rd ON cs.flag = rd.tag_counter
+            WHERE rd.tag_counter = cs.flag and mac = $1
+            ORDER BY cs_timestamp`, payload)
         .then(data => {
             res.json(data)
         })

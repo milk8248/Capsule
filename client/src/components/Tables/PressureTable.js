@@ -12,28 +12,40 @@ class PressureTable extends React.Component {
         const columns = [
             {
                 title: '時間',
-                dataIndex: 'timestamp',
-                key: 'timestamp',
+                dataIndex: 'cs_timestamp',
+                key: 'cs_timestamp',
             },
             {
                 title: '標準儀器壓力',
                 dataIndex: 'std_pressure',
                 key: 'std_pressure',
-                render: (_, {std_pressure}) => (
-                    <>
-                        {std_pressure} mmHg
-                    </>
-                ),
+                render: (_, {std_pressure}) => {
+                    if (std_pressure != null) {
+                        return (
+                            <>
+                                {std_pressure} mmHg
+                            </>
+                        )
+                    } else {
+                        return ''
+                    }
+                },
             },
             {
                 title: '接收器壓力',
                 dataIndex: 'reader_pressure',
                 key: 'reader_pressure',
-                render: (_, {reader_pressure}) => (
-                    <>
-                        {reader_pressure} mmHg
-                    </>
-                ),
+                render: (_, {reader_pressure}) => {
+                    if (reader_pressure != null) {
+                        return (
+                            <>
+                                {reader_pressure} mmHg
+                            </>
+                        )
+                    } else {
+                        return ''
+                    }
+                },
             },
             {
                 title: '流水號',
